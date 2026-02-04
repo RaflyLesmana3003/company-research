@@ -1,5 +1,7 @@
 # Company Contact Information Extraction Service
 
+**Dashboard:** [sme-venture.vercel.app](https://sme-venture.vercel.app)
+
 An automated n8n workflow that extracts and validates business contact information (phone, email, address) from enriched company data using AI, then safely updates HubSpot CRM records.
 
 ## Table of Contents
