@@ -1,0 +1,75 @@
+{
+  "hooks": [
+    {
+      "name": "phase-completion-reminder",
+      "event": "Stop",
+      "type": "prompt",
+      "description": "Remind about phase completion status on conversation end",
+      "prompt": "Before ending, verify: 1) Current phase status is documented, 2) Next steps are clear, 3) Any pending tasks are noted. If in the middle of a workflow development phase, remind the user which phase they're in and what's next."
+    },
+    {
+      "name": "task-create-validation",
+      "event": "PreToolUse",
+      "type": "prompt",
+      "matcher": "TaskCreate",
+      "description": "Validate TaskCreate calls have proper format",
+      "prompt": "Verify this TaskCreate has: 1) A clear, actionable subject starting with a verb, 2) A detailed description with acceptance criteria, 3) An activeForm in present continuous tense. If any are missing or poorly formatted, improve them before proceeding."
+    },
+    {
+      "name": "phase-gate-enforcement",
+      "event": "PreToolUse",
+      "type": "prompt",
+      "matcher": "mcp__n8n-mcp__n8n_create_workflow",
+      "description": "Enforce phase order before creating workflows",
+      "prompt": "STOP. Before creating a workflow on the n8n instance, verify: 1) Phase 4 (create-tasks) is COMPLETE with all tasks created, 2) You are currently in Phase 5 (execute) or later, 3) The workflow JSON has been validated. If not in the correct phase, REFUSE and guide the user to run the appropriate /workflow/* command first."
+    },
+    {
+      "name": "require-validation-before-deploy",
+      "event": "PreToolUse",
+      "type": "prompt",
+      "matcher": "mcp__n8n-mcp__n8n_create_workflow|mcp__n8n-mcp__n8n_update_full_workflow",
+      "description": "Require validation before deploying workflows",
+      "prompt": "CRITICAL: Have you run mcp__n8n-mcp__validate_workflow or mcp__n8n-mcp__n8n_validate_workflow on this workflow in this session? If not, you MUST validate first. Never deploy unvalidated workflows to the n8n instance."
+    },
+    {
+      "name": "workflow-operation-notice",
+      "event": "PreToolUse",
+      "type": "prompt",
+      "matcher": "mcp__n8n-mcp__n8n_create_workflow|mcp__n8n-mcp__n8n_update_full_workflow|mcp__n8n-mcp__n8n_test_workflow",
+      "description": "Confirm before workflow operations that modify n8n instance",
+      "prompt": "You are about to perform a workflow operation on the live n8n instance. Confirm: 1) The workflow has been validated, 2) The user is aware of this operation, 3) This is the intended action. Proceed with caution on production instances."
+    },
+    {
+      "name": "node-search-before-build",
+      "event": "PreToolUse",
+      "type": "prompt",
+      "matcher": "Write",
+      "description": "Verify node types before writing workflow files",
+      "prompt": "If writing a workflow JSON file to workflows/ directory: Verify that 1) All node types were confirmed via search_nodes or get_node, 2) Node configurations match the schema from get_node output, 3) typeVersion values are correct. Do not guess node types or parameters - always verify with n8n-mcp tools first."
+    },
+    {
+      "name": "task-progress-reminder",
+      "event": "PostToolUse",
+      "type": "prompt",
+      "matcher": "TaskUpdate",
+      "description": "Guide next steps after task updates",
+      "prompt": "Task updated. Now: 1) If status is 'completed', run TaskList to find the next available task, 2) If status is 'in_progress', continue working on the task, 3) Report progress to the user briefly. Keep momentum by moving to the next task promptly."
+    },
+    {
+      "name": "validation-result-analysis",
+      "event": "PostToolUse",
+      "type": "prompt",
+      "matcher": "mcp__n8n-mcp__validate_workflow|mcp__n8n-mcp__n8n_validate_workflow",
+      "description": "Analyze validation results after workflow validation",
+      "prompt": "Analyze the validation results: 1) Summarize any errors or warnings found, 2) For each error, suggest a specific fix, 3) If validation passed, confirm the workflow is ready for the next phase. Consider using n8n_autofix_workflow if there are fixable issues."
+    },
+    {
+      "name": "execution-result-analysis",
+      "event": "PostToolUse",
+      "type": "prompt",
+      "matcher": "mcp__n8n-mcp__n8n_test_workflow|mcp__n8n-mcp__n8n_executions",
+      "description": "Analyze execution results and suggest follow-ups",
+      "prompt": "Analyze the execution results: 1) Did it succeed or fail? 2) What was the output data? 3) Are there any errors to address? 4) If issues found, create follow-up tasks using TaskCreate. Report findings clearly to the user."
+    }
+  ]
+}

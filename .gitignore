@@ -1,0 +1,16 @@
+# Environment variables (contains secrets)
+.env
+.env.local
+.env*.local
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+
+# n8n workflow drafts
+workflows/*.draft.json
+
+# MCP config (may contain credentials)
+.mcp.json

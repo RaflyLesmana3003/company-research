@@ -1,0 +1,3104 @@
+{
+  "updatedAt": "2026-02-03T10:43:17.300Z",
+  "createdAt": "2026-02-02T02:26:19.493Z",
+  "id": "3oc9SlzVUfZMrW0a",
+  "name": "Contact Extraction Service",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "trigger-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -384,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "run_id",
+              "name": "run_id",
+              "type": "string",
+              "value": "={{ $json.data }}"
+            },
+            {
+              "id": "started_at",
+              "name": "started_at",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "id": "trigger_type",
+              "name": "trigger_type",
+              "type": "string",
+              "value": "={{ $execution.mode === 'manual' ? 'manual' : 'schedule' }}"
+            },
+            {
+              "id": "six_months_ago",
+              "name": "six_months_ago",
+              "type": "string",
+              "value": "={{ DateTime.now().minus({ months: 6 }).toMillis() }}"
+            },
+            {
+              "id": "e473db0c-a5e0-4dcc-b7f9-12b7bc5f6df8",
+              "name": "page_index",
+              "value": 0,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "init-run",
+      "name": "Initialize Run",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        32
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// TRD Section 3: Test Companies & Expected Results - EXACT DATA FROM TRD\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst enrichment_trigger = today.getTime();\n\nconst testCompanies = [\n  // Test Company 1: Patagonia\n  {\n    properties: {\n      name: 'Patagonia',\n      domain: 'patagonia.com',\n      country: 'United States',\n      city: 'Ventura',\n      state: 'California',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_contact_page: 'Contact Us - Patagonia. Customer Service: For questions about orders, returns, or products, call us at 1-800-638-6464 or email customerservice@patagonia.com. Hours: Monday-Friday 6am-6pm PT, Saturday-Sunday 6am-6pm PT. Corporate Headquarters: Patagonia, Inc., 259 W Santa Clara St, Ventura, CA 93001. For press inquiries: press@patagonia.com. For wholesale inquiries: wholesale@patagonia.com',\n      scraped_website_content: '',\n      scraped_about_page: ''\n    }\n  },\n  // Test Company 2: Atlassian\n  {\n    properties: {\n      name: 'Atlassian',\n      domain: 'atlassian.com',\n      country: 'Australia',\n      city: 'Sydney',\n      state: 'New South Wales',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_about_page: 'About Atlassian - We believe teamwork is possible anywhere. Atlassian builds software that helps teams collaborate better. Founded in 2002 in Sydney, Australia. Global Headquarters: Level 6, 341 George Street, Sydney NSW 2000, Australia. US Office: 350 Bush Street, Floor 13, San Francisco, CA 94104. For general inquiries contact info@atlassian.com. Investor Relations: investors@atlassian.com',\n      scraped_website_content: '',\n      scraped_contact_page: ''\n    }\n  },\n  // Test Company 3: Basecamp\n  {\n    properties: {\n      name: 'Basecamp',\n      domain: 'basecamp.com',\n      country: 'United States',\n      city: 'Chicago',\n      state: 'Illinois',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_website_content: 'Basecamp - Project management software that helps teams stay organized. We have been a fully remote company since 1999. Headquarters address: 30 N Racine Ave #200, Chicago, IL 60607. Phone: (312) 555-0123. For support questions, visit our help center at help.basecamp.com or email support@basecamp.com. Press contact: press@basecamp.com',\n      scraped_contact_page: '',\n      scraped_about_page: ''\n    }\n  },\n  // Test Company 4: TechStartup XYZ (Edge Case - Minimal Data)\n  {\n    properties: {\n      name: 'TechStartup XYZ',\n      domain: 'techstartupxyz.io',\n      country: 'United States',\n      city: 'Austin',\n      state: 'Texas',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_website_content: 'TechStartup XYZ - We are building the future of AI. Join our waitlist to be the first to know when we launch. Follow us on Twitter @techstartupxyz. Backed by Y Combinator.',\n      scraped_contact_page: '',\n      scraped_about_page: ''\n    }\n  },\n  // Test Company 5: Global Imports Ltd (Edge Case - Invalid Data)\n  {\n    properties: {\n      name: 'Global Imports Ltd',\n      domain: 'globalimportsltd.co.uk',\n      country: 'United Kingdom',\n      city: 'London',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_contact_page: 'Contact Global Imports Ltd. Mailing Address: PO Box 12345, London EC1A 1BB. For test orders use test@example.com. Phone: 0000000000. Our warehouse is located at 45 Industrial Way, Manchester M1 2AB, UK. General enquiries: enquiries@globalimportsltd.co.uk. Phone support: +44 20 7946 0958',\n      scraped_website_content: '',\n      scraped_about_page: ''\n    }\n  }\n];\n\nreturn testCompanies.map(company => ({ json: company }));"
+      },
+      "id": "mock-companies",
+      "name": "Test Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/create",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $input.all().map(item => ({ properties: item.json.properties })) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "hubspot-seed",
+      "name": "Seed to HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1280,
+        720
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "HayQkjpu3XNeTCOR",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "TRUNCATE TABLE processing_status, processing_errors, workflow_runs RESTART IDENTITY CASCADE;",
+        "options": {}
+      },
+      "id": "pg-clear-all",
+      "name": "Clear PostgreSQL Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        160,
+        720
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Ra6CDTYkvi3tHtRl",
+          "name": "rafly test"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'enrichment_trigger', operator: 'HAS_PROPERTY' }] }], properties: ['name'], limit: 100 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "clear-hubspot-search",
+      "name": "Search All Test Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        384,
+        720
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "HayQkjpu3XNeTCOR",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $json.results || [];\nif (results.length === 0) {\n  return [{ json: { message: 'No companies to delete', inputs: [] } }];\n}\nconst inputs = results.map(c => ({ id: c.id }));\nreturn [{ json: { inputs } }];"
+      },
+      "id": "clear-hubspot-prepare",
+      "name": "Prepare Delete Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/archive",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.inputs }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "clear-hubspot-delete",
+      "name": "Delete HubSpot Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        832,
+        720
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "HayQkjpu3XNeTCOR",
+          "name": "HubSpot account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Test & Seed Path\n\n**Manual Trigger** runs the test/seed pipeline:\n1. **Clear PostgreSQL Data** - Truncates 3 tables (processing_status, processing_errors, workflow_runs)\n2. **Search & Delete HubSpot** - Finds and removes test companies\n3. **Test Data** - Generates sample companies\n4. **Seed to HubSpot** - Creates test records in HubSpot\n\n\u26a0\ufe0f This path is for testing only. contact_extraction_results is preserved across test resets.",
+        "height": 448,
+        "width": 1616,
+        "color": 3
+      },
+      "id": "note-seed",
+      "name": "Seed & Test Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "action": "generate"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        32
+      ],
+      "id": "961f1614-4dd0-4271-8b1c-32cf2a12291a",
+      "name": "Crypto"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ filterGroups: [ { filters: [ { propertyName: 'enrichment_trigger', operator: 'HAS_PROPERTY' }, { propertyName: 'enrichment_trigger', operator: 'GTE', value: $('Initialize Run').first().json.six_months_ago }, { propertyName: 'manual_override', operator: 'NEQ', value: 'true' } ] }, { filters: [ { propertyName: 'enrichment_trigger', operator: 'HAS_PROPERTY' }, { propertyName: 'enrichment_trigger', operator: 'GTE', value: $('Initialize Run').first().json.six_months_ago }, { propertyName: 'manual_override', operator: 'NOT_HAS_PROPERTY' } ] } ], properties: ['name', 'domain', 'city', 'state', 'country', 'enrichment_trigger', 'scraped_website_content', 'scraped_contact_page', 'scraped_about_page', 'extracted_phone', 'extracted_email', 'extracted_address', 'clearbit_enriched', 'clearbit_confidence', 'manual_override', 'processing_status', 'error_message'], limit: 100, after: $json.page_index }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "5fbbe42f-2c5b-4329-9fcf-fa3b003bbd39",
+      "name": "HubSpot Search API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        32
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 4000,
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "HayQkjpu3XNeTCOR",
+          "name": "HubSpot account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const searchResponse = $json;\nconst initData = $('Initialize Run').first().json;\nconst staticData = $getWorkflowStaticData('global');\n\n// Clear static data on new run to prevent contamination from failed runs\nif (!staticData.lastRunId || staticData.lastRunId !== initData.run_id) {\n  staticData.allCompanies = [];\n  staticData.lastRunId = initData.run_id;\n}\n\nlet allCompanies = staticData.allCompanies || [];\n\nconst newResults = searchResponse.results || [];\nallCompanies = allCompanies.concat(newResults);\n\nconst hasMore = searchResponse.paging && searchResponse.paging.next && searchResponse.paging.next.after;\nconst nextCursor = hasMore ? searchResponse.paging.next.after : '';\n\nconst resultData = {\n  run_id: initData.run_id,\n  started_at: initData.started_at,\n  six_months_ago: initData.six_months_ago,\n  paging_cursor: nextCursor,\n  all_companies: JSON.stringify(allCompanies),\n  has_more: hasMore,\n  total_fetched: allCompanies.length,\n  page_results: newResults.length\n};\n\nstaticData.allCompanies = allCompanies;\nstaticData.resultData = resultData;\n\nreturn {\n  json: resultData\n};\n"
+      },
+      "id": "734e9705-b65a-429c-b4e5-284cc8802a8e",
+      "name": "Accumulate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 3,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "has-more-check",
+              "leftValue": "={{ $json.paging_cursor }}",
+              "rightValue": true,
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f7daa836-0ee0-418f-9877-f94b8e0e8d7a",
+      "name": "More Pages?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        608,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const data = $json;\nlet allCompanies = [];\ntry {\n  allCompanies = JSON.parse(data.all_companies || '[]');\n} catch (e) {\n  allCompanies = [];\n}\n\nreturn {\n  json: {\n    run_id: data.run_id,\n    started_at: data.started_at,\n    results: allCompanies,\n    total_fetched: allCompanies.length\n  }\n};"
+      },
+      "id": "742cb4ae-4b4d-4357-ad44-84d9f6053399",
+      "name": "Parse All Companies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## HubSpot Search\n\nPaginated search for companies matching trigger conditions:\n1. enrichment_trigger exists and within 6 months\n2. manual_override != true\n\nFetches 16 custom properties defined\n\n**Rate Limits:**\n- 100 requests per 10 seconds\n- Max 100 results per page (use pagination)\n- 250,000 daily API calls (free tier)\n\n**Retry:** 3 attempts, 4s wait (Section 7.3)",
+        "height": 640,
+        "width": 1184,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        176,
+        -304
+      ],
+      "typeVersion": 1,
+      "id": "9eb73e59-1818-42cc-ae2a-3d969e0e6cdc",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.results && $json.results.length > 0 ? 'SELECT crm_record_id, last_processed_timestamp, last_error_timestamp, error_count FROM processing_status WHERE crm_record_id = ANY($1::text[])' : 'SELECT NULL::varchar AS crm_record_id, NULL::timestamptz AS last_processed_timestamp, NULL::timestamptz AS last_error_timestamp, NULL::integer AS error_count WHERE false' }}",
+        "options": {
+          "queryReplacement": "={{ $json.results && $json.results.length > 0 ? ['{' + $json.results.map(r => '\"' + r.id + '\"').join(',') + '}'] : ['{}'] }}"
+        }
+      },
+      "id": "5d8c34ba-7138-4197-adf7-b6a87eb31bc4",
+      "name": "Check Dedup Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1456,
+        48
+      ],
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "Ra6CDTYkvi3tHtRl",
+          "name": "rafly test"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Apply Dedup Rules - TRD Section 5 Trigger Conditions\nconst parseOutput = $('Parse All Companies').first().json;\nconst companies = parseOutput?.results || [];\nconst runData = {\n  run_id: parseOutput?.run_id || $execution.id,\n  started_at: parseOutput?.started_at || new Date().toISOString()\n};\n\nconst dedupResults = $('Check Dedup Status').all().map(item => item.json).filter(item => item.crm_record_id) || [];\n\nconst now = Date.now();\nconst six_months_ago = now - (6 * 30 * 24 * 60 * 60 * 1000);\nconst twenty_four_hours_ago = now - (24 * 60 * 60 * 1000);\nconst thirty_days_ago = now - (30 * 24 * 60 * 60 * 1000);\n\nconst dedupMap = new Map();\nfor (const row of dedupResults) {\n  if (row.crm_record_id) {\n    dedupMap.set(row.crm_record_id, row);\n  }\n}\n\nconst stats = {\n  total_fetched: companies.length,\n  skipped: {\n    no_trigger: 0,\n    old_trigger: 0,\n    clearbit: 0,\n    has_extracted: 0,\n    manual_override: 0,\n    no_enrichment: 0,\n    recently_processed: 0,\n    recent_error: 0,\n    max_errors: 0\n  }\n};\n\nconst eligible = [];\n\nfor (const company of companies) {\n  const props = company.properties || company;\n  const id = company.id || company.hs_object_id;\n  const dedup = dedupMap.get(id);\n  \n  if (!props.enrichment_trigger) {\n    stats.skipped.no_trigger++;\n    continue;\n  }\n  \n  let triggerTime;\n  if (typeof props.enrichment_trigger === 'number') {\n    triggerTime = props.enrichment_trigger;\n  } else if (typeof props.enrichment_trigger === 'string') {\n    triggerTime = new Date(props.enrichment_trigger).getTime();\n  }\n  \n  if (!triggerTime || isNaN(triggerTime) || triggerTime < six_months_ago) {\n    stats.skipped.old_trigger++;\n    continue;\n  }\n  \n  if (props.clearbit_enriched === true || props.clearbit_enriched === 'true') {\n    stats.skipped.clearbit++;\n    continue;\n  }\n  \n  if (props.clearbit_confidence !== null && props.clearbit_confidence !== undefined && props.clearbit_confidence !== '') {\n    stats.skipped.clearbit++;\n    continue;\n  }\n  \n  const hasExtracted = (props.extracted_phone && props.extracted_phone !== 'none' && props.extracted_phone !== '') ||\n                       (props.extracted_email && props.extracted_email !== 'none' && props.extracted_email !== '') ||\n                       (props.extracted_address && props.extracted_address !== 'none' && props.extracted_address !== '');\n  if (hasExtracted) {\n    stats.skipped.has_extracted++;\n    continue;\n  }\n  \n  if (props.manual_override === true || props.manual_override === 'true') {\n    stats.skipped.manual_override++;\n    continue;\n  }\n  \n  const hasEnrichment = (props.scraped_website_content && props.scraped_website_content !== '') ||\n                        (props.scraped_contact_page && props.scraped_contact_page !== '') ||\n                        (props.scraped_about_page && props.scraped_about_page !== '');\n  if (!hasEnrichment) {\n    stats.skipped.no_enrichment++;\n    continue;\n  }\n  \n  if (dedup?.last_processed_timestamp) {\n    const lastProcessed = new Date(dedup.last_processed_timestamp).getTime();\n    if (lastProcessed > thirty_days_ago) {\n      stats.skipped.recently_processed++;\n      continue;\n    }\n  }\n  \n  if (dedup?.last_error_timestamp) {\n    const lastError = new Date(dedup.last_error_timestamp).getTime();\n    if (lastError > twenty_four_hours_ago) {\n      stats.skipped.recent_error++;\n      continue;\n    }\n  }\n  \n  if (dedup?.error_count >= 5) {\n    stats.skipped.max_errors++;\n    continue;\n  }\n  \n  eligible.push({\n    company_id: id,\n    company_name: props.name,\n    name: props.name,\n    domain: props.domain,\n    city: props.city || '',\n    state: props.state || '',\n    country: props.country || '',\n    enrichment_trigger: props.enrichment_trigger,\n    scraped_website_content: props.scraped_website_content || '',\n    scraped_contact_page: props.scraped_contact_page || '',\n    scraped_about_page: props.scraped_about_page || '',\n    run_id: runData.run_id,\n    started_at: runData.started_at\n  });\n}\n\nif (eligible.length === 0) {\n  return [{\n    json: {\n      company_id: null,\n      _empty: true,\n      run_id: runData.run_id,\n      started_at: runData.started_at,\n      stats: stats\n    }\n  }];\n}\n\nreturn eligible.map(c => ({ json: { ...c, stats } }));"
+      },
+      "id": "835c95e7-ea71-4709-917a-4ff92d977090",
+      "name": "Apply Dedup Rules",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 3,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-company-check",
+              "leftValue": "={{ $json.company_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "54cbcadc-36d9-497b-bbed-998db51630f8",
+      "name": "Has Companies?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1808,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "7fb3de56-cef2-4ffd-829a-aa37f9762c32",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2224,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "company_id",
+              "name": "company_id",
+              "type": "string",
+              "value": "={{ $json.company_id }}"
+            },
+            {
+              "id": "company_name",
+              "name": "company_name",
+              "type": "string",
+              "value": "={{ $json.name }}"
+            },
+            {
+              "id": "domain",
+              "name": "domain",
+              "type": "string",
+              "value": "={{ $json.domain }}"
+            },
+            {
+              "id": "city",
+              "name": "city",
+              "type": "string",
+              "value": "={{ $json.city }}"
+            },
+            {
+              "id": "state",
+              "name": "state",
+              "type": "string",
+              "value": "={{ $json.state }}"
+            },
+            {
+              "id": "country",
+              "name": "country",
+              "type": "string",
+              "value": "={{ $json.country }}"
+            },
+            {
+              "id": "run_id",
+              "name": "run_id",
+              "type": "string",
+              "value": "={{ $json.run_id }}"
+            },
+            {
+              "id": "scraped_website_content",
+              "name": "scraped_website_content",
+              "type": "string",
+              "value": "={{ $json.scraped_website_content }}"
+            },
+            {
+              "id": "scraped_contact_page",
+              "name": "scraped_contact_page",
+              "type": "string",
+              "value": "={{ $json.scraped_contact_page }}"
+            },
+            {
+              "id": "scraped_about_page",
+              "name": "scraped_about_page",
+              "type": "string",
+              "value": "={{ $json.scraped_about_page }}"
+            },
+            {
+              "id": "chatInput",
+              "name": "chatInput",
+              "type": "string",
+              "value": "=Extract verified contact information (phone, email, address) for this company from the provided data.\n\n## TARGET COMPANY\n- **Name:** {{ $json.name }}\n- **Domain:** {{ $json.domain }}\n- **Location:** {{ $json.city }}{{ $json.state ? ', ' + $json.state : '' }}{{ $json.country ? ', ' + $json.country : '' }}\n\n## PRE-SCRAPED CONTENT\n<website_content>\n{{ $json.scraped_website_content || 'Not available' }}\n</website_content>\n\n<contact_page>\n{{ $json.scraped_contact_page || 'Not available' }}\n</contact_page>\n\n<about_page>\n{{ $json.scraped_about_page || 'Not available' }}\n</about_page>\n\n## INSTRUCTIONS\n1. First, extract all contact info from the pre-scraped content above\n2. If any field is missing, use HTTP Request to fetch https://{{ $json.domain }}/contact or /about\n3. If no email found at all, use Deep Research Tool with \"{{ $json.domain }}\" as fallback\n4. Reject invalid data: PO Boxes, test@example.com, 0000000000, noreply@ emails\n5. Return \"none\" for any field that cannot be verified\n\n## OUTPUT FORMAT\nReturn ONLY this JSON:\n```json\n{\n  \"phone\": \"+18005551234 or none\",\n  \"address\": \"Full street address, City, State ZIP, Country or none\",\n  \"email\": \"contact@company.com or none\",\n  \"confidence\": 0.85,\n  \"sources\": [\"scraped_contact_page\", \"fetched_page\"]\n}\n```"
+            },
+            {
+              "id": "extraction_started_at",
+              "name": "extraction_started_at",
+              "type": "number",
+              "value": "={{ Date.now() }}"
+            },
+            {
+              "id": "enrichment_trigger",
+              "name": "enrichment_trigger",
+              "type": "string",
+              "value": "={{ $json.enrichment_trigger }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "34999467-8af3-40f2-af3a-1d328ed227e5",
+      "name": "Prepare AI Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2432,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert contact information extraction agent. Your primary job is to extract verified phone numbers, email addresses, and physical addresses from pre-scraped company data.\n\n## YOUR TOOLS\n1. **HTTP Request** - Fetch specific web pages from the company domain if pre-scraped content is missing data\n2. **Deep Research Tool** - Generate common business email patterns for a domain as a last resort\n\n## EXTRACTION STRATEGY\n\n### Step 1: Analyze Pre-Scraped Content (ALWAYS do this first)\n- Carefully read ALL provided scraped content (website, contact page, about page)\n- Extract any phone numbers, emails, and addresses present\n- This is your PRIMARY data source - most answers should come from here\n\n### Step 2: Direct Page Fetch (ONLY if pre-scraped content has gaps)\nIf a field is still missing after Step 1, try fetching:\n- `https://[domain]/contact` or `/contact-us`\n- `https://[domain]/about` or `/about-us`\n\n### Step 3: Email Pattern Check (ONLY if no email found)\nUse the Deep Research Tool with the company domain to generate email pattern candidates. Only use patterns that are common for the company type.\n\n## EXTRACTION RULES\n1. **Accuracy First**: Only extract information you can verify from the content. Never guess.\n2. **Phone Numbers**: Include country code, remove all formatting. Example: +18005551234\n3. **Addresses**: Full format with country. Example: 259 W Santa Clara St, Ventura, CA 93001, United States\n4. **Emails**: Prefer general company emails (info@, contact@, hello@, support@, customerservice@) over personal emails\n5. **Reject Invalid Data**:\n   - PO Box addresses should be rejected (extract physical address instead)\n   - Generic test emails like test@example.com should be rejected\n   - Phone numbers like 0000000000 or 1234567890 should be rejected\n   - Fax numbers should NOT be used as phone numbers\n   - noreply@, no-reply@, donotreply@ emails should be rejected\n\n## CONFIDENCE SCORING\n- Data from pre-scraped official content: 0.85-1.0\n- Data from fetched company pages: 0.70-0.85\n- Email from pattern generation: 0.40-0.60\n- No data found: 0.0\n\n## OUTPUT FORMAT\nReturn a structured JSON with exactly these fields:\n- phone: string (with country code, no formatting) or \"none\"\n- address: string (full address) or \"none\"\n- email: string (company email) or \"none\"\n- confidence: number (0.0 to 1.0)\n- sources: array of strings describing where each piece of info came from",
+          "maxIterations": 10
+        }
+      },
+      "id": "422766a0-8067-4ad2-b926-2e7bb479016a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        2608,
+        48
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 4000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"phone\": \"+18005551234\",\n  \"address\": \"123 Main Street, San Francisco, CA 94102, USA\",\n  \"email\": \"contact@company.com\",\n  \"confidence\": 0.95,\n  \"sources\": [\"scraped_content\", \"google_search\", \"wikipedia\"]\n}"
+      },
+      "id": "47ba668f-363b-49a6-929b-7d48cfdf6cd7",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2944,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process Agent Output - handles both JSON (structured parser) and text formats\nconst agentOutput = $json.output || $json;\nconst preparedData = $('Prepare AI Input').last().json;\n\n// Calculate extraction time from Prepare AI Input timestamp\nconst extraction_time_seconds = preparedData.extraction_started_at\n  ? parseFloat(((Date.now() - preparedData.extraction_started_at) / 1000).toFixed(2))\n  : 0;\n\n// Check if AI Agent errored\nconst isError = $json.error || $json.errorMessage || (typeof agentOutput === 'string' && agentOutput.includes('ERROR'));\n\nif (isError) {\n  return {\n    json: {\n      company_id: preparedData.company_id,\n      company_name: preparedData.company_name,\n      domain: preparedData.domain,\n      country: preparedData.country,\n      run_id: preparedData.run_id,\n      enrichment_trigger: preparedData.enrichment_trigger || '',\n      extracted_phone: 'none',\n      extracted_address: 'none',\n      extracted_email: 'none',\n      fields_found: 0,\n      confidence_score: 0,\n      sources: '',\n      raw_ai_response: JSON.stringify(agentOutput),\n      extraction_timestamp: new Date().toISOString(),\n      extraction_time_seconds,\n      parse_success: false,\n      error_message: $json.errorMessage || $json.error || 'AI Agent returned an error'\n    }\n  };\n}\n\nlet extracted_phone = 'none';\nlet extracted_address = 'none';\nlet extracted_email = 'none';\nlet confidence = 0;\nlet sources = [];\nlet parse_success = true;\n\ntry {\n  if (typeof agentOutput === 'object' && agentOutput !== null) {\n    extracted_phone = agentOutput.phone || 'none';\n    extracted_address = agentOutput.address || 'none';\n    extracted_email = agentOutput.email || 'none';\n    confidence = agentOutput.confidence || 0;\n    sources = agentOutput.sources || [];\n  } else if (typeof agentOutput === 'string') {\n    try {\n      const parsed = JSON.parse(agentOutput);\n      extracted_phone = parsed.phone || 'none';\n      extracted_address = parsed.address || 'none';\n      extracted_email = parsed.email || 'none';\n      confidence = parsed.confidence || 0;\n      sources = parsed.sources || [];\n    } catch (jsonErr) {\n      const phoneMatch = agentOutput.match(/Phone:\\s*(.+?)(?:Address:|Email:|$)/is);\n      const addressMatch = agentOutput.match(/Address:\\s*(.+?)(?:Email:|Phone:|$)/is);\n      const emailMatch = agentOutput.match(/Email:\\s*(.+?)(?:Phone:|Address:|$)/is);\n      if (phoneMatch || addressMatch || emailMatch) {\n        extracted_phone = phoneMatch ? phoneMatch[1].trim() : 'none';\n        extracted_address = addressMatch ? addressMatch[1].trim() : 'none';\n        extracted_email = emailMatch ? emailMatch[1].trim() : 'none';\n        confidence = 0.7;\n        sources = ['ai_text_output'];\n      } else {\n        parse_success = false;\n      }\n    }\n  } else {\n    parse_success = false;\n  }\n} catch (e) {\n  parse_success = false;\n}\n\nlet fields_found = 0;\nif (extracted_phone !== 'none' && extracted_phone !== '') fields_found++;\nif (extracted_address !== 'none' && extracted_address !== '') fields_found++;\nif (extracted_email !== 'none' && extracted_email !== '') fields_found++;\n\nreturn {\n  json: {\n    company_id: preparedData.company_id,\n    company_name: preparedData.company_name,\n    domain: preparedData.domain,\n    country: preparedData.country,\n    run_id: preparedData.run_id,\n    enrichment_trigger: preparedData.enrichment_trigger || '',\n    extracted_phone,\n    extracted_address,\n    extracted_email,\n    fields_found,\n    confidence_score: confidence,\n    sources: Array.isArray(sources) ? sources.join(', ') : String(sources),\n    raw_ai_response: JSON.stringify(agentOutput),\n    extraction_timestamp: new Date().toISOString(),\n    extraction_time_seconds,\n    parse_success,\n    error_message: parse_success ? '' : 'Failed to parse AI output'\n  }\n};\n"
+      },
+      "id": "791ddf49-2ac3-4a05-990f-04a3be022243",
+      "name": "Process Agent Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3056,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\n\nif (item.parse_success === false) {\n  return {\n    json: {\n      ...item,\n      extracted_phone: 'none',\n      extracted_email: 'none',\n      extracted_address: 'none',\n      fields_found: 0,\n      confidence_score: 0,\n      status: 'error',\n      validation_passed: false,\n      error_message: item.error_message || 'AI output parsing failed'\n    }\n  };\n}\n\nconst VALID_COUNTRY_CODES = [\n  '1','7','27','30','31','32','33','34','36','39','40','41','43','44','45','46','47','48','49',\n  '51','52','53','54','55','56','57','58','60','61','62','63','64','65','66',\n  '81','82','84','86','90','91','92','93','94','95',\n  '212','213','216','220','234','254','255','256','260','263',\n  '351','352','353','354','356','358','370','371','372','380','381','385','386',\n  '420','421','852','853','855','856','880','886',\n  '960','961','962','963','964','965','966','967','968','971','972','973','974','975','976','977',\n  '992','993','994','995','996','998'\n];\n\nfunction validatePhone(phone) {\n  if (!phone || phone === 'none' || phone === '') return 'none';\n  let cleaned = phone.replace(/[^\\d+]/g, '');\n  if (!cleaned.startsWith('+') && cleaned.length > 0) cleaned = '+' + cleaned;\n  const digits = cleaned.replace(/\\D/g, '');\n  if (digits.length < 10 || digits.length > 20) return 'none';\n  if (/^0{5,}/.test(digits)) return 'none';\n  if (/^1{5,}/.test(digits)) return 'none';\n  if (/^123456/.test(digits)) return 'none';\n  if (/^555555/.test(digits)) return 'none';\n  if (/(\\d)\\1{5,}/.test(digits)) return 'none';\n  const hasValidCountryCode = VALID_COUNTRY_CODES.some(code => digits.startsWith(code));\n  if (!hasValidCountryCode) return 'none';\n  return cleaned;\n}\n\nfunction validateEmail(email) {\n  if (!email || email === 'none' || email === '') return 'none';\n  const cleaned = email.trim().toLowerCase();\n  if (cleaned.length < 5 || cleaned.length > 254) return 'none';\n  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/;\n  if (!emailRegex.test(cleaned)) return 'none';\n  const rejectPrefixes = ['test@', 'example@', 'noreply@', 'no-reply@', 'donotreply@'];\n  for (const prefix of rejectPrefixes) { if (cleaned.startsWith(prefix)) return 'none'; }\n  const rejectDomains = ['@test.', '@example.', '@localhost'];\n  for (const domain of rejectDomains) { if (cleaned.includes(domain)) return 'none'; }\n  return cleaned;\n}\n\nfunction validateAddress(address) {\n  if (!address || address === 'none' || address === '') return 'none';\n  const cleaned = address.trim();\n  if (cleaned.length < 10 || cleaned.length > 500) return 'none';\n  if (/\\bP\\.?O\\.?\\s*Box\\b/i.test(cleaned)) return 'none';\n  if (/\\bPost\\s*Office\\s*Box\\b/i.test(cleaned)) return 'none';\n  if (/\\bGPO\\s*Box\\b/i.test(cleaned)) return 'none';\n  if (/^test/i.test(cleaned) || /^example/i.test(cleaned)) return 'none';\n  if (/^none$/i.test(cleaned) || /^n\\/a$/i.test(cleaned)) return 'none';\n  const streetIndicators = /\\b(St|Street|Ave|Avenue|Rd|Road|Way|Blvd|Boulevard|Dr|Drive|Ln|Lane|Ct|Court|Pl|Place|Cir|Circle|Terr|Terrace|Hwy|Highway|Str|Strasse|Stra\\u00dfe|Rue|Via|Calle|Avenida|Camino|Platz|Piazza|Prospekt|Ulitsa|Jalan|Soi|Marg|Path|Row|Walk|Close|Crescent|Parade|Square|Level|Floor|Suite|Unit|Apt|Industrial)\\b/i;\n  const hasStreetIndicator = streetIndicators.test(cleaned);\n  const hasNumber = /\\d+/.test(cleaned);\n  if (!hasStreetIndicator || !hasNumber) return 'none';\n  return cleaned;\n}\n\nconst validated_phone = validatePhone(item.extracted_phone);\nconst validated_email = validateEmail(item.extracted_email);\nconst validated_address = validateAddress(item.extracted_address);\n\nlet fields_found = 0;\nif (validated_phone !== 'none') fields_found++;\nif (validated_email !== 'none') fields_found++;\nif (validated_address !== 'none') fields_found++;\n\nconst confidence_score = item.confidence_score || (fields_found / 3);\nlet status = fields_found === 3 ? 'complete' : fields_found === 0 ? 'no_data' : 'partial';\n\nconst prepData = $('Prepare AI Input').last().json;\nconst data_sources_available = [];\nif (prepData.scraped_website_content) data_sources_available.push('scraped_website_content');\nif (prepData.scraped_contact_page) data_sources_available.push('scraped_contact_page');\nif (prepData.scraped_about_page) data_sources_available.push('scraped_about_page');\n\nreturn {\n  json: {\n    ...item,\n    extracted_phone: validated_phone,\n    extracted_email: validated_email,\n    extracted_address: validated_address,\n    fields_found,\n    confidence_score,\n    status,\n    validation_passed: true,\n    data_sources_available: data_sources_available.join(', ')\n  }\n};\n"
+      },
+      "id": "070aeafc-e3ed-455b-a845-1955e8ee6bb1",
+      "name": "Validate Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3248,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 3,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "validation-check",
+              "leftValue": "={{ $json.validation_passed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "parse-check",
+              "leftValue": "={{ $json.parse_success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "49e3a7e0-4381-41d1-8f67-f904344e25c9",
+      "name": "Check Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3424,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO contact_extraction_results (crm_record_id, company_name, domain, extracted_phone, extracted_address, extracted_email, extraction_timestamp, processing_run_id, model_version, extraction_time_seconds, status, error_message, raw_ai_response, confidence_score, fields_found, data_sources_used) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::uuid, $9, $10, $11, $12, $13, $14, $15, $16::jsonb)",
+        "options": {
+          "queryReplacement": "={{ [$json.company_id, $json.company_name, $json.domain, $json.extracted_phone, $json.extracted_address, $json.extracted_email, $json.extraction_timestamp, $json.run_id, 'gemini-2.5-pro', $json.extraction_time_seconds || 0, $json.status, $json.error_message || null, $json.raw_ai_response, $json.confidence_score, $json.fields_found, JSON.stringify({sources_reported: ($json.sources || '').split(', ').filter(s => s), sources_available: ($json.data_sources_available || '').split(', ').filter(s => s)})] }}"
+        }
+      },
+      "id": "1f9e7251-d7a7-4b4e-a9b1-addd83069796",
+      "name": "Store Result",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3632,
+        -48
+      ],
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "postgres": {
+          "id": "Ra6CDTYkvi3tHtRl",
+          "name": "rafly test"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO processing_errors (crm_record_id, error_timestamp, error_type, error_message, error_details, processing_run_id, retry_count) VALUES ($1, NOW(), $2, $3, $4::jsonb, $5::uuid, $6)",
+        "options": {
+          "queryReplacement": "={{ [$json.company_id, $json.parse_success === false ? 'ai_parse_failure' : 'validation_failed', $json.error_message || ('Validation failed for ' + $json.company_name + ' - ' + $json.domain), JSON.stringify({domain: $json.domain, raw_response_preview: ($json.raw_ai_response || '').substring(0, 500), parse_success: $json.parse_success, fields_found: $json.fields_found}), $json.run_id, 0] }}"
+        }
+      },
+      "id": "a31ff6df-51f9-47ea-925d-a77e173b8c0b",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3632,
+        160
+      ],
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "postgres": {
+          "id": "Ra6CDTYkvi3tHtRl",
+          "name": "rafly test"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO processing_status (crm_record_id, last_trigger_timestamp, last_processed_timestamp, processing_count, error_count, last_error_timestamp, last_status, last_run_id, updated_at) VALUES ($1, CASE WHEN $2 IS NOT NULL AND $2 != '' THEN TO_TIMESTAMP(CAST($2 AS BIGINT) / 1000) ELSE NULL END, $3, 1, $4, $5, $6, $7::uuid, NOW()) ON CONFLICT (crm_record_id) DO UPDATE SET last_trigger_timestamp = COALESCE(CASE WHEN $2 IS NOT NULL AND $2 != '' THEN TO_TIMESTAMP(CAST($2 AS BIGINT) / 1000) ELSE NULL END, processing_status.last_trigger_timestamp), last_processed_timestamp = $3, processing_count = processing_status.processing_count + 1, error_count = CASE WHEN $6 = 'error' THEN processing_status.error_count + 1 ELSE processing_status.error_count END, last_error_timestamp = CASE WHEN $6 = 'error' THEN $5 ELSE processing_status.last_error_timestamp END, last_status = $6, last_run_id = $7::uuid, updated_at = NOW() RETURNING *",
+        "options": {
+          "queryReplacement": "={{ [$json.company_id || $('Validate Data').last().json.company_id, $json.enrichment_trigger || $('Validate Data').last().json.enrichment_trigger || null, $json.extraction_timestamp || $('Validate Data').last().json.extraction_timestamp || new Date().toISOString(), ($json.status || $('Validate Data').last().json.status) === 'error' ? 1 : 0, ($json.status || $('Validate Data').last().json.status) === 'error' ? new Date().toISOString() : null, $json.status || $('Validate Data').last().json.status || 'processed', $json.run_id || $('Validate Data').last().json.run_id] }}"
+        }
+      },
+      "id": "75a1887a-28df-41e7-9bf1-1add38471700",
+      "name": "Update Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3856,
+        48
+      ],
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "postgres": {
+          "id": "Ra6CDTYkvi3tHtRl",
+          "name": "rafly test"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "results",
+        "options": {}
+      },
+      "id": "a81d180c-63b0-45c8-9554-259e6cd8bfbc",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        4320,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// TRD Section 2.1: All output properties for HubSpot batch update\nconst allItems = $input.all();\nconst results = allItems.length > 0 && allItems[0].json.results ? allItems[0].json.results : allItems.map(i => i.json);\nconst safeResults = [];\nlet successCount = 0;\nlet failCount = 0;\nlet skipCount = 0;\n\n// Read skip stats directly from Apply Dedup Rules (survives regardless of batch loop)\ntry {\n  const dedupStats = $('Apply Dedup Rules').first().json.stats;\n  if (dedupStats && dedupStats.skipped) {\n    skipCount = Object.values(dedupStats.skipped).reduce((a, b) => a + b, 0);\n  }\n} catch(e) { skipCount = 0; }\n\nfor (const result of results) {\n  if (!result.company_id) { failCount++; continue; }\n  const isError = result.status === 'error';\n  if (isError) failCount++; else successCount++;\n  \n  const properties = {\n    extracted_phone: result.extracted_phone || 'none',\n    extracted_email: result.extracted_email || 'none',\n    extracted_address: result.extracted_address || 'none',\n    extraction_model: 'gemini-2.5-pro',\n    extraction_timestamp: new Date().toISOString(),\n    extraction_confidence: result.confidence_score || 0,\n    fields_found_count: result.fields_found || 0,\n    processing_status: result.status || 'complete'\n  };\n  \n  if (isError && result.error_message) {\n    properties.error_message = result.error_message;\n  }\n  \n  safeResults.push({ id: result.company_id, properties });\n}\n\n// Batch into groups of 100 (HubSpot limit)\nconst batches = [];\nfor (let i = 0; i < safeResults.length; i += 100) {\n  batches.push({\n    inputs: safeResults.slice(i, i + 100),\n    batch_number: Math.floor(i / 100) + 1,\n    total_in_batch: Math.min(100, safeResults.length - i)\n  });\n}\n\nif (batches.length === 0) {\n  return [{ json: { inputs: [], batch_number: 0, total_in_batch: 0, success_count: successCount, fail_count: failCount, companies_skipped: skipCount, skip_hubspot: true, run_id: results[0]?.run_id || '' } }];\n}\n\nbatches[0].success_count = successCount;\nbatches[0].fail_count = failCount;\nbatches[0].companies_skipped = skipCount;\nbatches[0].skip_hubspot = false;\nbatches[0].run_id = results[0]?.run_id || '';\nreturn batches.map(batch => ({ json: batch }));\n"
+      },
+      "id": "b72bde3f-161c-4bd5-a51f-6bde10c1a637",
+      "name": "Safety Validation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4496,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/update",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.inputs }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "7fc430c7-851c-47df-a20e-b827c3258c16",
+      "name": "HubSpot Batch Update",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4928,
+        -48
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 4000,
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "HayQkjpu3XNeTCOR",
+          "name": "HubSpot account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_runs (run_id, started_at, completed_at, status, companies_processed, companies_successful, companies_failed, companies_skipped, total_duration_seconds, trigger_type) VALUES ($1::uuid, $2, NOW(), 'completed', $3, $4, $5, $6, EXTRACT(EPOCH FROM (NOW() - $2::timestamp)), $7) ON CONFLICT (run_id) DO UPDATE SET completed_at = NOW(), status = 'completed', companies_processed = $3, companies_successful = $4, companies_failed = $5, companies_skipped = $6, total_duration_seconds = EXTRACT(EPOCH FROM (NOW() - workflow_runs.started_at)), trigger_type = $7",
+        "options": {
+          "queryReplacement": "={{ [$('Safety Validation').first().json.run_id || $('Initialize Run').first().json.run_id, $('Initialize Run').first().json.started_at, ($('Safety Validation').first().json.success_count || 0) + ($('Safety Validation').first().json.fail_count || 0), $('Safety Validation').first().json.success_count || 0, $('Safety Validation').first().json.fail_count || 0, $('Safety Validation').first().json.companies_skipped || 0, $('Initialize Run').first().json.trigger_type || 'schedule'] }}"
+        }
+      },
+      "id": "ef1b153c-9451-4e49-8e50-f4b203ffc98d",
+      "name": "Log Run Complete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        5328,
+        32
+      ],
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "postgres": {
+          "id": "Ra6CDTYkvi3tHtRl",
+          "name": "rafly test"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "projectId": {
+          "__rl": true,
+          "value": "chrystalesia",
+          "mode": "list",
+          "cachedResultName": "chrystalesia"
+        },
+        "modelName": "gemini-2.5-pro",
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleVertex",
+      "typeVersion": 1,
+      "position": [
+        2480,
+        272
+      ],
+      "id": "d7b656d5-7a87-41c0-b656-3f62faab7fbd",
+      "name": "Google Vertex Chat Model",
+      "credentials": {
+        "googleApi": {
+          "id": "9iY5nunUaOYRzEe5",
+          "name": "rafly vertex"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Re-assemble extracted data from Validate Data node for the batch loop\n// Use .last() to get the current iteration's data in a batch loop\nconst validated = $('Validate Data').last().json;\n\nreturn {\n  json: {\n    company_id: validated.company_id,\n    company_name: validated.company_name,\n    domain: validated.domain,\n    extracted_phone: validated.extracted_phone || 'none',\n    extracted_email: validated.extracted_email || 'none',\n    extracted_address: validated.extracted_address || 'none',\n    confidence_score: validated.confidence_score || 0,\n    fields_found: validated.fields_found || 0,\n    status: validated.status || 'partial',\n    extraction_timestamp: validated.extraction_timestamp || new Date().toISOString(),\n    extraction_time_seconds: validated.extraction_time_seconds || 0,\n    enrichment_trigger: validated.enrichment_trigger || '',\n    model_version: 'gemini-2.5-pro',\n    sources: validated.sources || '',\n    run_id: validated.run_id || '',\n    error_message: validated.error_message || ''\n  }\n};\n"
+      },
+      "id": "ececde5e-5fff-4845-bf92-0c2047746dbd",
+      "name": "Carry Forward Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Deduplication Check\n\nValidates ALL 8 trigger conditions before processing:\n1. enrichment_trigger exists and within 6 months\n2. clearbit_enriched = false, clearbit_confidence is null\n3. extracted_phone, extracted_email, extracted_address all empty\n4. manual_override != true\n5. Has enrichment data (at least one scraped field)\n6. Not processed within last 30 days (dedup window)\n7. No errors within last 24 hours (error cooldown)\n8. Less than 5 total error attempts\n\nConditions 1-5 checked from HubSpot data.\nConditions 6-8 checked against PostgreSQL processing_status table.",
+        "height": 512,
+        "width": 544,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1392,
+        -304
+      ],
+      "typeVersion": 1,
+      "id": "7fc2d66c-0fd9-460b-8332-85e386d3ef17",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## AI Extraction\n\n**Required Architecture (Section 1.2):**\nAI Provider: Google Vertex AI (Gemini 2.5 Pro)\n\n**Vertex AI Configuration (Section 7.2):**\n- Model: gemini-2.5-pro\n- Temperature: 0.5\n\n**Required Output Format (Section 3.1):**\nPhone: <phone_with_country_code_no_formatting>\nAddress: <full_street_address_google_format>\nEmail: <generic_company_email>\nReturns \"none\" (lowercase) if field cannot be found.\n\n**Strategy:**\n1. Extract from pre-scraped content (primary)\n2. HTTP Request to fetch /contact or /about (fallback)\n3. Deep Research Tool for email patterns (last resort)\n\n**Retry Logic:** 3 attempts, exponential backoff, 30s timeout",
+        "height": 944,
+        "width": 2048,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2160,
+        -464
+      ],
+      "typeVersion": 1,
+      "id": "2eb429d8-6027-453a-b42e-456024cfd1ce",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Data Validation, Storage & CRM Update\n\n**Validation Rules (Section 4):**\n- Phone: 10-20 digits, starts with + or digit, valid country code (+1, +44, +61, etc.), reject all zeros/ones/sequential/repeated\n- Email: Valid format, 5-254 chars, reject test@, example@, noreply@, @localhost\n- Address: 10-500 chars, reject PO Box/P.O. Box/GPO Box, must contain street number + type\n\n**PostgreSQL Storage:**\n- contact_extraction_results: Main audit trail\n- processing_status: Dedup tracking\n- processing_errors: Error logging\n\n**HubSpot Batch Update:**\n- Max 100 companies per batch request\n- Safety Validation before writing to CRM\n- Updates: extracted_phone, extracted_email, extracted_address, processing_status, extraction_confidence, fields_found_count, extraction_timestamp, extraction_model\n\n**Audit Logging:** workflow_runs table records run metrics",
+        "height": 688,
+        "width": 1216,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4272,
+        -464
+      ],
+      "typeVersion": 1,
+      "id": "f080ae5f-8eb8-410a-96da-faa5d0f2bf38",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', '', 'string') }}",
+        "options": {}
+      },
+      "id": "4d930e90-24dd-4cab-ab8c-327705ba8c84",
+      "name": "HTTP Request Tool",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        2640,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Generate common business email patterns for a company domain. Input should be the company domain (e.g. 'patagonia.com'). Returns a list of likely email addresses to try based on common business patterns.",
+        "jsCode": "const domain = query.trim().replace(/^https?:\\/\\//, '').replace(/^www\\./, '').split('/')[0];\n\nconst prefixes = [\n  'info', 'contact', 'hello', 'support', 'sales',\n  'admin', 'office', 'enquiries', 'inquiries',\n  'press', 'media', 'marketing', 'partnerships',\n  'hr', 'careers', 'jobs', 'billing',\n  'legal', 'compliance', 'privacy',\n  'help', 'feedback', 'general'\n];\n\nconst emails = prefixes.map(p => `${p}@${domain}`);\n\nreturn `Common business email patterns for ${domain}:\\n${emails.join('\\n')}\\n\\nMost likely general contact emails:\\n- info@${domain}\\n- contact@${domain}\\n- hello@${domain}\\n- support@${domain}\\n\\nNote: These are PATTERN suggestions. Verify actual existence via search results or website content before using.`;"
+      },
+      "id": "631a3627-bc4a-4e9c-86dc-669e6263dfa7",
+      "name": "Deep Research Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        2784,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst resultData = staticData.resultData || {};\n\n// Clear for next workflow execution\nstaticData.allCompanies = [];\nstaticData.resultData = null;\n\n// Return as SINGLE item with the structure second code expects\nreturn {\n  json: resultData\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        48
+      ],
+      "id": "f818d1b3-16a7-4f25-8693-657571b6dcd4",
+      "name": "fetch companies",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  page_index: $input.first().json.paging_cursor\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        16
+      ],
+      "id": "1e3d41d4-5272-4b8f-bfc0-b0dfa60ff5eb",
+      "name": "handle pagination"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE contact_extraction_results SET crm_updated_at = NOW() WHERE processing_run_id = $1::uuid AND crm_updated_at IS NULL",
+        "options": {
+          "queryReplacement": "={{ [$json.run_id || $('Initialize Run').first().json.run_id] }}"
+        }
+      },
+      "id": "166485ae-6370-4c3e-a539-d38105a49d58",
+      "name": "Update CRM Timestamp",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        5152,
+        -48
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Ra6CDTYkvi3tHtRl",
+          "name": "rafly test"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_runs (run_id, started_at, completed_at, status, companies_processed, companies_successful, companies_failed, companies_skipped, total_duration_seconds, trigger_type) VALUES ($1::uuid, $2, NOW(), 'completed', 0, 0, 0, $3, EXTRACT(EPOCH FROM (NOW() - $2::timestamp)), $4) ON CONFLICT (run_id) DO UPDATE SET completed_at = NOW(), status = 'completed', companies_processed = 0, companies_successful = 0, companies_failed = 0, companies_skipped = $3, total_duration_seconds = EXTRACT(EPOCH FROM (NOW() - workflow_runs.started_at)), trigger_type = $4",
+        "options": {
+          "queryReplacement": "={{ [$('Initialize Run').first().json.run_id, $('Initialize Run').first().json.started_at, (() => { try { const s = $('Apply Dedup Rules').first().json.stats; return s && s.skipped ? Object.values(s.skipped).reduce((a,b) => a+b, 0) : 0; } catch(e) { return 0; } })(), $('Initialize Run').first().json.trigger_type || 'schedule'] }}"
+        }
+      },
+      "id": "36d56521-8efd-4203-a7db-0bea9155a147",
+      "name": "Log Empty Run",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1968,
+        240
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Ra6CDTYkvi3tHtRl",
+          "name": "rafly test"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 3,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-skip",
+              "leftValue": "={{ $json.skip_hubspot }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notTrue"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "skip-empty-batch-check",
+      "name": "Has Results?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4656,
+        16
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Crypto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Clear PostgreSQL Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Data": {
+      "main": [
+        [
+          {
+            "node": "Seed to HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search All Test Companies": {
+      "main": [
+        [
+          {
+            "node": "Prepare Delete Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Delete Batch": {
+      "main": [
+        [
+          {
+            "node": "Delete HubSpot Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete HubSpot Companies": {
+      "main": [
+        [
+          {
+            "node": "Test Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear PostgreSQL Data": {
+      "main": [
+        [
+          {
+            "node": "Search All Test Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto": {
+      "main": [
+        [
+          {
+            "node": "Initialize Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Run": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Search API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot Search API": {
+      "main": [
+        [
+          {
+            "node": "Accumulate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accumulate Results": {
+      "main": [
+        [
+          {
+            "node": "More Pages?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Pages?": {
+      "main": [
+        [
+          {
+            "node": "handle pagination",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "fetch companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse All Companies": {
+      "main": [
+        [
+          {
+            "node": "Check Dedup Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Dedup Status": {
+      "main": [
+        [
+          {
+            "node": "Apply Dedup Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Dedup Rules": {
+      "main": [
+        [
+          {
+            "node": "Has Companies?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Companies?": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Empty Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare AI Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI Input": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Process Agent Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Agent Output": {
+      "main": [
+        [
+          {
+            "node": "Validate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Data": {
+      "main": [
+        [
+          {
+            "node": "Check Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Valid": {
+      "main": [
+        [
+          {
+            "node": "Store Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Result": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status": {
+      "main": [
+        [
+          {
+            "node": "Carry Forward Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Safety Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Vertex Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carry Forward Data": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deep Research Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch companies": {
+      "main": [
+        [
+          {
+            "node": "Parse All Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "handle pagination": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Search API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot Batch Update": {
+      "main": [
+        [
+          {
+            "node": "Update CRM Timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CRM Timestamp": {
+      "main": [
+        [
+          {
+            "node": "Log Run Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safety Validation": {
+      "main": [
+        [
+          {
+            "node": "Has Results?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Results?": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Batch Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Run Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": [
+        0
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "8d5cdbd0-8134-4035-8485-d1465adb1c6f",
+  "activeVersionId": "e892d15e-69be-41f5-8820-6b8c7ef76803",
+  "versionCounter": 384,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-02T02:26:19.496Z",
+      "createdAt": "2026-02-02T02:26:19.496Z",
+      "role": "workflow:owner",
+      "workflowId": "3oc9SlzVUfZMrW0a",
+      "projectId": "mldik61gMwo1I9OC",
+      "project": {
+        "updatedAt": "2025-03-19T05:18:46.338Z",
+        "createdAt": "2025-03-19T05:18:12.469Z",
+        "id": "mldik61gMwo1I9OC",
+        "name": "Chrysler Chandra <adechrysler@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "8174ea72-6ca0-4b2b-ae42-ae95e0dcd9ca",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-03-19T05:18:12.469Z",
+            "createdAt": "2025-03-19T05:18:12.469Z",
+            "userId": "8174ea72-6ca0-4b2b-ae42-ae95e0dcd9ca",
+            "projectId": "mldik61gMwo1I9OC",
+            "user": {
+              "updatedAt": "2026-02-03T04:55:57.000Z",
+              "createdAt": "2025-03-19T05:18:12.130Z",
+              "id": "8174ea72-6ca0-4b2b-ae42-ae95e0dcd9ca",
+              "email": "adechrysler@gmail.com",
+              "firstName": "Chrysler",
+              "lastName": "Chandra",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-03-19T05:18:46.634Z",
+                "personalization_survey_n8n_version": "1.84.1"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "49Wr3pmfueu0iW1b",
+                "userActivatedAt": 1742402075107,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1760179739934
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-02",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-02-03T10:34:42.405Z",
+    "createdAt": "2026-02-03T10:34:42.405Z",
+    "versionId": "e892d15e-69be-41f5-8820-6b8c7ef76803",
+    "workflowId": "3oc9SlzVUfZMrW0a",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours",
+                "hoursInterval": 6
+              }
+            ]
+          }
+        },
+        "id": "trigger-schedule",
+        "name": "Schedule Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.3,
+        "position": [
+          -384,
+          32
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "run_id",
+                "name": "run_id",
+                "type": "string",
+                "value": "={{ $json.data }}"
+              },
+              {
+                "id": "started_at",
+                "name": "started_at",
+                "type": "string",
+                "value": "={{ $now.toISO() }}"
+              },
+              {
+                "id": "trigger_type",
+                "name": "trigger_type",
+                "type": "string",
+                "value": "={{ $execution.mode === 'manual' ? 'manual' : 'schedule' }}"
+              },
+              {
+                "id": "six_months_ago",
+                "name": "six_months_ago",
+                "type": "string",
+                "value": "={{ DateTime.now().minus({ months: 6 }).toMillis() }}"
+              },
+              {
+                "id": "e473db0c-a5e0-4dcc-b7f9-12b7bc5f6df8",
+                "name": "page_index",
+                "value": 0,
+                "type": "number"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "init-run",
+        "name": "Initialize Run",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -64,
+          32
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "manual-trigger",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          -64,
+          720
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// TRD Section 3: Test Companies & Expected Results - EXACT DATA FROM TRD\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst enrichment_trigger = today.getTime();\n\nconst testCompanies = [\n  // Test Company 1: Patagonia\n  {\n    properties: {\n      name: 'Patagonia',\n      domain: 'patagonia.com',\n      country: 'United States',\n      city: 'Ventura',\n      state: 'California',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_contact_page: 'Contact Us - Patagonia. Customer Service: For questions about orders, returns, or products, call us at 1-800-638-6464 or email customerservice@patagonia.com. Hours: Monday-Friday 6am-6pm PT, Saturday-Sunday 6am-6pm PT. Corporate Headquarters: Patagonia, Inc., 259 W Santa Clara St, Ventura, CA 93001. For press inquiries: press@patagonia.com. For wholesale inquiries: wholesale@patagonia.com',\n      scraped_website_content: '',\n      scraped_about_page: ''\n    }\n  },\n  // Test Company 2: Atlassian\n  {\n    properties: {\n      name: 'Atlassian',\n      domain: 'atlassian.com',\n      country: 'Australia',\n      city: 'Sydney',\n      state: 'New South Wales',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_about_page: 'About Atlassian - We believe teamwork is possible anywhere. Atlassian builds software that helps teams collaborate better. Founded in 2002 in Sydney, Australia. Global Headquarters: Level 6, 341 George Street, Sydney NSW 2000, Australia. US Office: 350 Bush Street, Floor 13, San Francisco, CA 94104. For general inquiries contact info@atlassian.com. Investor Relations: investors@atlassian.com',\n      scraped_website_content: '',\n      scraped_contact_page: ''\n    }\n  },\n  // Test Company 3: Basecamp\n  {\n    properties: {\n      name: 'Basecamp',\n      domain: 'basecamp.com',\n      country: 'United States',\n      city: 'Chicago',\n      state: 'Illinois',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_website_content: 'Basecamp - Project management software that helps teams stay organized. We have been a fully remote company since 1999. Headquarters address: 30 N Racine Ave #200, Chicago, IL 60607. Phone: (312) 555-0123. For support questions, visit our help center at help.basecamp.com or email support@basecamp.com. Press contact: press@basecamp.com',\n      scraped_contact_page: '',\n      scraped_about_page: ''\n    }\n  },\n  // Test Company 4: TechStartup XYZ (Edge Case - Minimal Data)\n  {\n    properties: {\n      name: 'TechStartup XYZ',\n      domain: 'techstartupxyz.io',\n      country: 'United States',\n      city: 'Austin',\n      state: 'Texas',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_website_content: 'TechStartup XYZ - We are building the future of AI. Join our waitlist to be the first to know when we launch. Follow us on Twitter @techstartupxyz. Backed by Y Combinator.',\n      scraped_contact_page: '',\n      scraped_about_page: ''\n    }\n  },\n  // Test Company 5: Global Imports Ltd (Edge Case - Invalid Data)\n  {\n    properties: {\n      name: 'Global Imports Ltd',\n      domain: 'globalimportsltd.co.uk',\n      country: 'United Kingdom',\n      city: 'London',\n      enrichment_trigger: enrichment_trigger,\n      manual_override: false,\n      clearbit_enriched: false,\n      processing_status: 'pending',\n      scraped_contact_page: 'Contact Global Imports Ltd. Mailing Address: PO Box 12345, London EC1A 1BB. For test orders use test@example.com. Phone: 0000000000. Our warehouse is located at 45 Industrial Way, Manchester M1 2AB, UK. General enquiries: enquiries@globalimportsltd.co.uk. Phone support: +44 20 7946 0958',\n      scraped_website_content: '',\n      scraped_about_page: ''\n    }\n  }\n];\n\nreturn testCompanies.map(company => ({ json: company }));"
+        },
+        "id": "mock-companies",
+        "name": "Test Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1056,
+          720
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/create",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ inputs: $input.all().map(item => ({ properties: item.json.properties })) }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            }
+          }
+        },
+        "id": "hubspot-seed",
+        "name": "Seed to HubSpot",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1280,
+          720
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "HayQkjpu3XNeTCOR",
+            "name": "HubSpot account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "TRUNCATE TABLE processing_status, processing_errors, workflow_runs RESTART IDENTITY CASCADE;",
+          "options": {}
+        },
+        "id": "pg-clear-all",
+        "name": "Clear PostgreSQL Data",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          160,
+          720
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "Ra6CDTYkvi3tHtRl",
+            "name": "rafly test"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'enrichment_trigger', operator: 'HAS_PROPERTY' }] }], properties: ['name'], limit: 100 }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            }
+          }
+        },
+        "id": "clear-hubspot-search",
+        "name": "Search All Test Companies",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          384,
+          720
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "HayQkjpu3XNeTCOR",
+            "name": "HubSpot account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const results = $json.results || [];\nif (results.length === 0) {\n  return [{ json: { message: 'No companies to delete', inputs: [] } }];\n}\nconst inputs = results.map(c => ({ id: c.id }));\nreturn [{ json: { inputs } }];"
+        },
+        "id": "clear-hubspot-prepare",
+        "name": "Prepare Delete Batch",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          608,
+          720
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/archive",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ inputs: $json.inputs }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "id": "clear-hubspot-delete",
+        "name": "Delete HubSpot Companies",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          832,
+          720
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "HayQkjpu3XNeTCOR",
+            "name": "HubSpot account"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "content": "## Test & Seed Path\n\n**Manual Trigger** runs the test/seed pipeline:\n1. **Clear PostgreSQL Data** - Truncates 3 tables (processing_status, processing_errors, workflow_runs)\n2. **Search & Delete HubSpot** - Finds and removes test companies\n3. **Test Data** - Generates sample companies\n4. **Seed to HubSpot** - Creates test records in HubSpot\n\n\u26a0\ufe0f This path is for testing only. contact_extraction_results is preserved across test resets."
+        },
+        "id": "note-seed",
+        "name": "Seed & Test Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -128,
+          464
+        ]
+      },
+      {
+        "parameters": {
+          "action": "generate"
+        },
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          -224,
+          32
+        ],
+        "id": "961f1614-4dd0-4271-8b1c-32cf2a12291a",
+        "name": "Crypto"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ filterGroups: [ { filters: [ { propertyName: 'enrichment_trigger', operator: 'HAS_PROPERTY' }, { propertyName: 'enrichment_trigger', operator: 'GTE', value: $('Initialize Run').first().json.six_months_ago }, { propertyName: 'manual_override', operator: 'NEQ', value: 'true' } ] }, { filters: [ { propertyName: 'enrichment_trigger', operator: 'HAS_PROPERTY' }, { propertyName: 'enrichment_trigger', operator: 'GTE', value: $('Initialize Run').first().json.six_months_ago }, { propertyName: 'manual_override', operator: 'NOT_HAS_PROPERTY' } ] } ], properties: ['name', 'domain', 'city', 'state', 'country', 'enrichment_trigger', 'scraped_website_content', 'scraped_contact_page', 'scraped_about_page', 'extracted_phone', 'extracted_email', 'extracted_address', 'clearbit_enriched', 'clearbit_confidence', 'manual_override', 'processing_status', 'error_message'], limit: 100, after: $json.page_index }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            },
+            "timeout": 30000
+          }
+        },
+        "id": "5fbbe42f-2c5b-4329-9fcf-fa3b003bbd39",
+        "name": "HubSpot Search API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          272,
+          32
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 4000,
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "HayQkjpu3XNeTCOR",
+            "name": "HubSpot account"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const searchResponse = $json;\nconst initData = $('Initialize Run').first().json;\nconst staticData = $getWorkflowStaticData('global');\n\n// Clear static data on new run to prevent contamination from failed runs\nif (!staticData.lastRunId || staticData.lastRunId !== initData.run_id) {\n  staticData.allCompanies = [];\n  staticData.lastRunId = initData.run_id;\n}\n\nlet allCompanies = staticData.allCompanies || [];\n\nconst newResults = searchResponse.results || [];\nallCompanies = allCompanies.concat(newResults);\n\nconst hasMore = searchResponse.paging && searchResponse.paging.next && searchResponse.paging.next.after;\nconst nextCursor = hasMore ? searchResponse.paging.next.after : '';\n\nconst resultData = {\n  run_id: initData.run_id,\n  started_at: initData.started_at,\n  six_months_ago: initData.six_months_ago,\n  paging_cursor: nextCursor,\n  all_companies: JSON.stringify(allCompanies),\n  has_more: hasMore,\n  total_fetched: allCompanies.length,\n  page_results: newResults.length\n};\n\nstaticData.allCompanies = allCompanies;\nstaticData.resultData = resultData;\n\nreturn {\n  json: resultData\n};\n"
+        },
+        "id": "734e9705-b65a-429c-b4e5-284cc8802a8e",
+        "name": "Accumulate Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          448,
+          32
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 3,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "has-more-check",
+                "leftValue": "={{ $json.paging_cursor }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "id": "f7daa836-0ee0-418f-9877-f94b8e0e8d7a",
+        "name": "More Pages?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          608,
+          32
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const data = $json;\nlet allCompanies = [];\ntry {\n  allCompanies = JSON.parse(data.all_companies || '[]');\n} catch (e) {\n  allCompanies = [];\n}\n\nreturn {\n  json: {\n    run_id: data.run_id,\n    started_at: data.started_at,\n    results: allCompanies,\n    total_fetched: allCompanies.length\n  }\n};"
+        },
+        "id": "742cb4ae-4b4d-4357-ad44-84d9f6053399",
+        "name": "Parse All Companies",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## HubSpot Search\n\nPaginated search for companies matching trigger conditions:\n1. enrichment_trigger exists and within 6 months\n2. manual_override != true\n\nFetches 16 custom properties defined\n\n**Rate Limits:**\n- 100 requests per 10 seconds\n- Max 100 results per page (use pagination)\n- 250,000 daily API calls (free tier)\n\n**Retry:** 3 attempts, 4s wait (Section 7.3)",
+          "height": 640,
+          "width": 1184,
+          "color": 7
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          176,
+          -304
+        ],
+        "typeVersion": 1,
+        "id": "9eb73e59-1818-42cc-ae2a-3d969e0e6cdc",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "={{ $json.results && $json.results.length > 0 ? 'SELECT crm_record_id, last_processed_timestamp, last_error_timestamp, error_count FROM processing_status WHERE crm_record_id = ANY($1::text[])' : 'SELECT NULL::varchar AS crm_record_id, NULL::timestamptz AS last_processed_timestamp, NULL::timestamptz AS last_error_timestamp, NULL::integer AS error_count WHERE false' }}",
+          "options": {
+            "queryReplacement": "={{ $json.results && $json.results.length > 0 ? ['{' + $json.results.map(r => '\"' + r.id + '\"').join(',') + '}'] : ['{}'] }}"
+          }
+        },
+        "id": "5d8c34ba-7138-4197-adf7-b6a87eb31bc4",
+        "name": "Check Dedup Status",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          1456,
+          48
+        ],
+        "retryOnFail": false,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "Ra6CDTYkvi3tHtRl",
+            "name": "rafly test"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Apply Dedup Rules - TRD Section 5 Trigger Conditions\nconst parseOutput = $('Parse All Companies').first().json;\nconst companies = parseOutput?.results || [];\nconst runData = {\n  run_id: parseOutput?.run_id || $execution.id,\n  started_at: parseOutput?.started_at || new Date().toISOString()\n};\n\nconst dedupResults = $('Check Dedup Status').all().map(item => item.json).filter(item => item.crm_record_id) || [];\n\nconst now = Date.now();\nconst six_months_ago = now - (6 * 30 * 24 * 60 * 60 * 1000);\nconst twenty_four_hours_ago = now - (24 * 60 * 60 * 1000);\nconst thirty_days_ago = now - (30 * 24 * 60 * 60 * 1000);\n\nconst dedupMap = new Map();\nfor (const row of dedupResults) {\n  if (row.crm_record_id) {\n    dedupMap.set(row.crm_record_id, row);\n  }\n}\n\nconst stats = {\n  total_fetched: companies.length,\n  skipped: {\n    no_trigger: 0,\n    old_trigger: 0,\n    clearbit: 0,\n    has_extracted: 0,\n    manual_override: 0,\n    no_enrichment: 0,\n    recently_processed: 0,\n    recent_error: 0,\n    max_errors: 0\n  }\n};\n\nconst eligible = [];\n\nfor (const company of companies) {\n  const props = company.properties || company;\n  const id = company.id || company.hs_object_id;\n  const dedup = dedupMap.get(id);\n  \n  if (!props.enrichment_trigger) {\n    stats.skipped.no_trigger++;\n    continue;\n  }\n  \n  let triggerTime;\n  if (typeof props.enrichment_trigger === 'number') {\n    triggerTime = props.enrichment_trigger;\n  } else if (typeof props.enrichment_trigger === 'string') {\n    triggerTime = new Date(props.enrichment_trigger).getTime();\n  }\n  \n  if (!triggerTime || isNaN(triggerTime) || triggerTime < six_months_ago) {\n    stats.skipped.old_trigger++;\n    continue;\n  }\n  \n  if (props.clearbit_enriched === true || props.clearbit_enriched === 'true') {\n    stats.skipped.clearbit++;\n    continue;\n  }\n  \n  if (props.clearbit_confidence !== null && props.clearbit_confidence !== undefined && props.clearbit_confidence !== '') {\n    stats.skipped.clearbit++;\n    continue;\n  }\n  \n  const hasExtracted = (props.extracted_phone && props.extracted_phone !== 'none' && props.extracted_phone !== '') ||\n                       (props.extracted_email && props.extracted_email !== 'none' && props.extracted_email !== '') ||\n                       (props.extracted_address && props.extracted_address !== 'none' && props.extracted_address !== '');\n  if (hasExtracted) {\n    stats.skipped.has_extracted++;\n    continue;\n  }\n  \n  if (props.manual_override === true || props.manual_override === 'true') {\n    stats.skipped.manual_override++;\n    continue;\n  }\n  \n  const hasEnrichment = (props.scraped_website_content && props.scraped_website_content !== '') ||\n                        (props.scraped_contact_page && props.scraped_contact_page !== '') ||\n                        (props.scraped_about_page && props.scraped_about_page !== '');\n  if (!hasEnrichment) {\n    stats.skipped.no_enrichment++;\n    continue;\n  }\n  \n  if (dedup?.last_processed_timestamp) {\n    const lastProcessed = new Date(dedup.last_processed_timestamp).getTime();\n    if (lastProcessed > thirty_days_ago) {\n      stats.skipped.recently_processed++;\n      continue;\n    }\n  }\n  \n  if (dedup?.last_error_timestamp) {\n    const lastError = new Date(dedup.last_error_timestamp).getTime();\n    if (lastError > twenty_four_hours_ago) {\n      stats.skipped.recent_error++;\n      continue;\n    }\n  }\n  \n  if (dedup?.error_count >= 5) {\n    stats.skipped.max_errors++;\n    continue;\n  }\n  \n  eligible.push({\n    company_id: id,\n    company_name: props.name,\n    name: props.name,\n    domain: props.domain,\n    city: props.city || '',\n    state: props.state || '',\n    country: props.country || '',\n    enrichment_trigger: props.enrichment_trigger,\n    scraped_website_content: props.scraped_website_content || '',\n    scraped_contact_page: props.scraped_contact_page || '',\n    scraped_about_page: props.scraped_about_page || '',\n    run_id: runData.run_id,\n    started_at: runData.started_at\n  });\n}\n\nif (eligible.length === 0) {\n  return [{\n    json: {\n      company_id: null,\n      _empty: true,\n      run_id: runData.run_id,\n      started_at: runData.started_at,\n      stats: stats\n    }\n  }];\n}\n\nreturn eligible.map(c => ({ json: { ...c, stats } }));"
+        },
+        "id": "835c95e7-ea71-4709-917a-4ff92d977090",
+        "name": "Apply Dedup Rules",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1632,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 3,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "has-company-check",
+                "leftValue": "={{ $json.company_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "54cbcadc-36d9-497b-bbed-998db51630f8",
+        "name": "Has Companies?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1808,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "options": {
+            "reset": false
+          }
+        },
+        "id": "7fb3de56-cef2-4ffd-829a-aa37f9762c32",
+        "name": "Split In Batches",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          2224,
+          32
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "company_id",
+                "name": "company_id",
+                "type": "string",
+                "value": "={{ $json.company_id }}"
+              },
+              {
+                "id": "company_name",
+                "name": "company_name",
+                "type": "string",
+                "value": "={{ $json.name }}"
+              },
+              {
+                "id": "domain",
+                "name": "domain",
+                "type": "string",
+                "value": "={{ $json.domain }}"
+              },
+              {
+                "id": "city",
+                "name": "city",
+                "type": "string",
+                "value": "={{ $json.city }}"
+              },
+              {
+                "id": "state",
+                "name": "state",
+                "type": "string",
+                "value": "={{ $json.state }}"
+              },
+              {
+                "id": "country",
+                "name": "country",
+                "type": "string",
+                "value": "={{ $json.country }}"
+              },
+              {
+                "id": "run_id",
+                "name": "run_id",
+                "type": "string",
+                "value": "={{ $json.run_id }}"
+              },
+              {
+                "id": "scraped_website_content",
+                "name": "scraped_website_content",
+                "type": "string",
+                "value": "={{ $json.scraped_website_content }}"
+              },
+              {
+                "id": "scraped_contact_page",
+                "name": "scraped_contact_page",
+                "type": "string",
+                "value": "={{ $json.scraped_contact_page }}"
+              },
+              {
+                "id": "scraped_about_page",
+                "name": "scraped_about_page",
+                "type": "string",
+                "value": "={{ $json.scraped_about_page }}"
+              },
+              {
+                "id": "chatInput",
+                "name": "chatInput",
+                "type": "string",
+                "value": "=Extract verified contact information (phone, email, address) for this company from the provided data.\n\n## TARGET COMPANY\n- **Name:** {{ $json.name }}\n- **Domain:** {{ $json.domain }}\n- **Location:** {{ $json.city }}{{ $json.state ? ', ' + $json.state : '' }}{{ $json.country ? ', ' + $json.country : '' }}\n\n## PRE-SCRAPED CONTENT\n<website_content>\n{{ $json.scraped_website_content || 'Not available' }}\n</website_content>\n\n<contact_page>\n{{ $json.scraped_contact_page || 'Not available' }}\n</contact_page>\n\n<about_page>\n{{ $json.scraped_about_page || 'Not available' }}\n</about_page>\n\n## INSTRUCTIONS\n1. First, extract all contact info from the pre-scraped content above\n2. If any field is missing, use HTTP Request to fetch https://{{ $json.domain }}/contact or /about\n3. If no email found at all, use Deep Research Tool with \"{{ $json.domain }}\" as fallback\n4. Reject invalid data: PO Boxes, test@example.com, 0000000000, noreply@ emails\n5. Return \"none\" for any field that cannot be verified\n\n## OUTPUT FORMAT\nReturn ONLY this JSON:\n```json\n{\n  \"phone\": \"+18005551234 or none\",\n  \"address\": \"Full street address, City, State ZIP, Country or none\",\n  \"email\": \"contact@company.com or none\",\n  \"confidence\": 0.85,\n  \"sources\": [\"scraped_contact_page\", \"fetched_page\"]\n}\n```"
+              },
+              {
+                "id": "extraction_started_at",
+                "name": "extraction_started_at",
+                "type": "number",
+                "value": "={{ Date.now() }}"
+              },
+              {
+                "id": "enrichment_trigger",
+                "name": "enrichment_trigger",
+                "type": "string",
+                "value": "={{ $json.enrichment_trigger }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "34999467-8af3-40f2-af3a-1d328ed227e5",
+        "name": "Prepare AI Input",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2432,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.chatInput }}",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are an expert contact information extraction agent. Your primary job is to extract verified phone numbers, email addresses, and physical addresses from pre-scraped company data.\n\n## YOUR TOOLS\n1. **HTTP Request** - Fetch specific web pages from the company domain if pre-scraped content is missing data\n2. **Deep Research Tool** - Generate common business email patterns for a domain as a last resort\n\n## EXTRACTION STRATEGY\n\n### Step 1: Analyze Pre-Scraped Content (ALWAYS do this first)\n- Carefully read ALL provided scraped content (website, contact page, about page)\n- Extract any phone numbers, emails, and addresses present\n- This is your PRIMARY data source - most answers should come from here\n\n### Step 2: Direct Page Fetch (ONLY if pre-scraped content has gaps)\nIf a field is still missing after Step 1, try fetching:\n- `https://[domain]/contact` or `/contact-us`\n- `https://[domain]/about` or `/about-us`\n\n### Step 3: Email Pattern Check (ONLY if no email found)\nUse the Deep Research Tool with the company domain to generate email pattern candidates. Only use patterns that are common for the company type.\n\n## EXTRACTION RULES\n1. **Accuracy First**: Only extract information you can verify from the content. Never guess.\n2. **Phone Numbers**: Include country code, remove all formatting. Example: +18005551234\n3. **Addresses**: Full format with country. Example: 259 W Santa Clara St, Ventura, CA 93001, United States\n4. **Emails**: Prefer general company emails (info@, contact@, hello@, support@, customerservice@) over personal emails\n5. **Reject Invalid Data**:\n   - PO Box addresses should be rejected (extract physical address instead)\n   - Generic test emails like test@example.com should be rejected\n   - Phone numbers like 0000000000 or 1234567890 should be rejected\n   - Fax numbers should NOT be used as phone numbers\n   - noreply@, no-reply@, donotreply@ emails should be rejected\n\n## CONFIDENCE SCORING\n- Data from pre-scraped official content: 0.85-1.0\n- Data from fetched company pages: 0.70-0.85\n- Email from pattern generation: 0.40-0.60\n- No data found: 0.0\n\n## OUTPUT FORMAT\nReturn a structured JSON with exactly these fields:\n- phone: string (with country code, no formatting) or \"none\"\n- address: string (full address) or \"none\"\n- email: string (company email) or \"none\"\n- confidence: number (0.0 to 1.0)\n- sources: array of strings describing where each piece of info came from",
+            "maxIterations": 10
+          }
+        },
+        "id": "422766a0-8067-4ad2-b926-2e7bb479016a",
+        "name": "AI Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.7,
+        "position": [
+          2608,
+          48
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 4000,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"phone\": \"+18005551234\",\n  \"address\": \"123 Main Street, San Francisco, CA 94102, USA\",\n  \"email\": \"contact@company.com\",\n  \"confidence\": 0.95,\n  \"sources\": [\"scraped_content\", \"google_search\", \"wikipedia\"]\n}"
+        },
+        "id": "47ba668f-363b-49a6-929b-7d48cfdf6cd7",
+        "name": "Structured Output Parser",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          2944,
+          272
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Process Agent Output - handles both JSON (structured parser) and text formats\nconst agentOutput = $json.output || $json;\nconst preparedData = $('Prepare AI Input').last().json;\n\n// Calculate extraction time from Prepare AI Input timestamp\nconst extraction_time_seconds = preparedData.extraction_started_at\n  ? parseFloat(((Date.now() - preparedData.extraction_started_at) / 1000).toFixed(2))\n  : 0;\n\n// Check if AI Agent errored\nconst isError = $json.error || $json.errorMessage || (typeof agentOutput === 'string' && agentOutput.includes('ERROR'));\n\nif (isError) {\n  return {\n    json: {\n      company_id: preparedData.company_id,\n      company_name: preparedData.company_name,\n      domain: preparedData.domain,\n      country: preparedData.country,\n      run_id: preparedData.run_id,\n      enrichment_trigger: preparedData.enrichment_trigger || '',\n      extracted_phone: 'none',\n      extracted_address: 'none',\n      extracted_email: 'none',\n      fields_found: 0,\n      confidence_score: 0,\n      sources: '',\n      raw_ai_response: JSON.stringify(agentOutput),\n      extraction_timestamp: new Date().toISOString(),\n      extraction_time_seconds,\n      parse_success: false,\n      error_message: $json.errorMessage || $json.error || 'AI Agent returned an error'\n    }\n  };\n}\n\nlet extracted_phone = 'none';\nlet extracted_address = 'none';\nlet extracted_email = 'none';\nlet confidence = 0;\nlet sources = [];\nlet parse_success = true;\n\ntry {\n  if (typeof agentOutput === 'object' && agentOutput !== null) {\n    extracted_phone = agentOutput.phone || 'none';\n    extracted_address = agentOutput.address || 'none';\n    extracted_email = agentOutput.email || 'none';\n    confidence = agentOutput.confidence || 0;\n    sources = agentOutput.sources || [];\n  } else if (typeof agentOutput === 'string') {\n    try {\n      const parsed = JSON.parse(agentOutput);\n      extracted_phone = parsed.phone || 'none';\n      extracted_address = parsed.address || 'none';\n      extracted_email = parsed.email || 'none';\n      confidence = parsed.confidence || 0;\n      sources = parsed.sources || [];\n    } catch (jsonErr) {\n      const phoneMatch = agentOutput.match(/Phone:\\s*(.+?)(?:Address:|Email:|$)/is);\n      const addressMatch = agentOutput.match(/Address:\\s*(.+?)(?:Email:|Phone:|$)/is);\n      const emailMatch = agentOutput.match(/Email:\\s*(.+?)(?:Phone:|Address:|$)/is);\n      if (phoneMatch || addressMatch || emailMatch) {\n        extracted_phone = phoneMatch ? phoneMatch[1].trim() : 'none';\n        extracted_address = addressMatch ? addressMatch[1].trim() : 'none';\n        extracted_email = emailMatch ? emailMatch[1].trim() : 'none';\n        confidence = 0.7;\n        sources = ['ai_text_output'];\n      } else {\n        parse_success = false;\n      }\n    }\n  } else {\n    parse_success = false;\n  }\n} catch (e) {\n  parse_success = false;\n}\n\nlet fields_found = 0;\nif (extracted_phone !== 'none' && extracted_phone !== '') fields_found++;\nif (extracted_address !== 'none' && extracted_address !== '') fields_found++;\nif (extracted_email !== 'none' && extracted_email !== '') fields_found++;\n\nreturn {\n  json: {\n    company_id: preparedData.company_id,\n    company_name: preparedData.company_name,\n    domain: preparedData.domain,\n    country: preparedData.country,\n    run_id: preparedData.run_id,\n    enrichment_trigger: preparedData.enrichment_trigger || '',\n    extracted_phone,\n    extracted_address,\n    extracted_email,\n    fields_found,\n    confidence_score: confidence,\n    sources: Array.isArray(sources) ? sources.join(', ') : String(sources),\n    raw_ai_response: JSON.stringify(agentOutput),\n    extraction_timestamp: new Date().toISOString(),\n    extraction_time_seconds,\n    parse_success,\n    error_message: parse_success ? '' : 'Failed to parse AI output'\n  }\n};\n"
+        },
+        "id": "791ddf49-2ac3-4a05-990f-04a3be022243",
+        "name": "Process Agent Output",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3056,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const item = $json;\n\nif (item.parse_success === false) {\n  return {\n    json: {\n      ...item,\n      extracted_phone: 'none',\n      extracted_email: 'none',\n      extracted_address: 'none',\n      fields_found: 0,\n      confidence_score: 0,\n      status: 'error',\n      validation_passed: false,\n      error_message: item.error_message || 'AI output parsing failed'\n    }\n  };\n}\n\nconst VALID_COUNTRY_CODES = [\n  '1','7','27','30','31','32','33','34','36','39','40','41','43','44','45','46','47','48','49',\n  '51','52','53','54','55','56','57','58','60','61','62','63','64','65','66',\n  '81','82','84','86','90','91','92','93','94','95',\n  '212','213','216','220','234','254','255','256','260','263',\n  '351','352','353','354','356','358','370','371','372','380','381','385','386',\n  '420','421','852','853','855','856','880','886',\n  '960','961','962','963','964','965','966','967','968','971','972','973','974','975','976','977',\n  '992','993','994','995','996','998'\n];\n\nfunction validatePhone(phone) {\n  if (!phone || phone === 'none' || phone === '') return 'none';\n  let cleaned = phone.replace(/[^\\d+]/g, '');\n  if (!cleaned.startsWith('+') && cleaned.length > 0) cleaned = '+' + cleaned;\n  const digits = cleaned.replace(/\\D/g, '');\n  if (digits.length < 10 || digits.length > 20) return 'none';\n  if (/^0{5,}/.test(digits)) return 'none';\n  if (/^1{5,}/.test(digits)) return 'none';\n  if (/^123456/.test(digits)) return 'none';\n  if (/^555555/.test(digits)) return 'none';\n  if (/(\\d)\\1{5,}/.test(digits)) return 'none';\n  const hasValidCountryCode = VALID_COUNTRY_CODES.some(code => digits.startsWith(code));\n  if (!hasValidCountryCode) return 'none';\n  return cleaned;\n}\n\nfunction validateEmail(email) {\n  if (!email || email === 'none' || email === '') return 'none';\n  const cleaned = email.trim().toLowerCase();\n  if (cleaned.length < 5 || cleaned.length > 254) return 'none';\n  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/;\n  if (!emailRegex.test(cleaned)) return 'none';\n  const rejectPrefixes = ['test@', 'example@', 'noreply@', 'no-reply@', 'donotreply@'];\n  for (const prefix of rejectPrefixes) { if (cleaned.startsWith(prefix)) return 'none'; }\n  const rejectDomains = ['@test.', '@example.', '@localhost'];\n  for (const domain of rejectDomains) { if (cleaned.includes(domain)) return 'none'; }\n  return cleaned;\n}\n\nfunction validateAddress(address) {\n  if (!address || address === 'none' || address === '') return 'none';\n  const cleaned = address.trim();\n  if (cleaned.length < 10 || cleaned.length > 500) return 'none';\n  if (/\\bP\\.?O\\.?\\s*Box\\b/i.test(cleaned)) return 'none';\n  if (/\\bPost\\s*Office\\s*Box\\b/i.test(cleaned)) return 'none';\n  if (/\\bGPO\\s*Box\\b/i.test(cleaned)) return 'none';\n  if (/^test/i.test(cleaned) || /^example/i.test(cleaned)) return 'none';\n  if (/^none$/i.test(cleaned) || /^n\\/a$/i.test(cleaned)) return 'none';\n  const streetIndicators = /\\b(St|Street|Ave|Avenue|Rd|Road|Way|Blvd|Boulevard|Dr|Drive|Ln|Lane|Ct|Court|Pl|Place|Cir|Circle|Terr|Terrace|Hwy|Highway|Str|Strasse|Stra\\u00dfe|Rue|Via|Calle|Avenida|Camino|Platz|Piazza|Prospekt|Ulitsa|Jalan|Soi|Marg|Path|Row|Walk|Close|Crescent|Parade|Square|Level|Floor|Suite|Unit|Apt|Industrial)\\b/i;\n  const hasStreetIndicator = streetIndicators.test(cleaned);\n  const hasNumber = /\\d+/.test(cleaned);\n  if (!hasStreetIndicator || !hasNumber) return 'none';\n  return cleaned;\n}\n\nconst validated_phone = validatePhone(item.extracted_phone);\nconst validated_email = validateEmail(item.extracted_email);\nconst validated_address = validateAddress(item.extracted_address);\n\nlet fields_found = 0;\nif (validated_phone !== 'none') fields_found++;\nif (validated_email !== 'none') fields_found++;\nif (validated_address !== 'none') fields_found++;\n\nconst confidence_score = item.confidence_score || (fields_found / 3);\nlet status = fields_found === 3 ? 'complete' : fields_found === 0 ? 'no_data' : 'partial';\n\nconst prepData = $('Prepare AI Input').last().json;\nconst data_sources_available = [];\nif (prepData.scraped_website_content) data_sources_available.push('scraped_website_content');\nif (prepData.scraped_contact_page) data_sources_available.push('scraped_contact_page');\nif (prepData.scraped_about_page) data_sources_available.push('scraped_about_page');\n\nreturn {\n  json: {\n    ...item,\n    extracted_phone: validated_phone,\n    extracted_email: validated_email,\n    extracted_address: validated_address,\n    fields_found,\n    confidence_score,\n    status,\n    validation_passed: true,\n    data_sources_available: data_sources_available.join(', ')\n  }\n};\n"
+        },
+        "id": "070aeafc-e3ed-455b-a845-1955e8ee6bb1",
+        "name": "Validate Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3248,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 3,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "validation-check",
+                "leftValue": "={{ $json.validation_passed }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              },
+              {
+                "id": "parse-check",
+                "leftValue": "={{ $json.parse_success }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "49e3a7e0-4381-41d1-8f67-f904344e25c9",
+        "name": "Check Valid",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          3424,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO contact_extraction_results (crm_record_id, company_name, domain, extracted_phone, extracted_address, extracted_email, extraction_timestamp, processing_run_id, model_version, extraction_time_seconds, status, error_message, raw_ai_response, confidence_score, fields_found, data_sources_used) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::uuid, $9, $10, $11, $12, $13, $14, $15, $16::jsonb)",
+          "options": {
+            "queryReplacement": "={{ [$json.company_id, $json.company_name, $json.domain, $json.extracted_phone, $json.extracted_address, $json.extracted_email, $json.extraction_timestamp, $json.run_id, 'gemini-2.5-pro', $json.extraction_time_seconds || 0, $json.status, $json.error_message || null, $json.raw_ai_response, $json.confidence_score, $json.fields_found, JSON.stringify({sources_reported: ($json.sources || '').split(', ').filter(s => s), sources_available: ($json.data_sources_available || '').split(', ').filter(s => s)})] }}"
+          }
+        },
+        "id": "1f9e7251-d7a7-4b4e-a9b1-addd83069796",
+        "name": "Store Result",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          3632,
+          -48
+        ],
+        "retryOnFail": false,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "credentials": {
+          "postgres": {
+            "id": "Ra6CDTYkvi3tHtRl",
+            "name": "rafly test"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO processing_errors (crm_record_id, error_timestamp, error_type, error_message, error_details, processing_run_id, retry_count) VALUES ($1, NOW(), $2, $3, $4::jsonb, $5::uuid, $6)",
+          "options": {
+            "queryReplacement": "={{ [$json.company_id, $json.parse_success === false ? 'ai_parse_failure' : 'validation_failed', $json.error_message || ('Validation failed for ' + $json.company_name + ' - ' + $json.domain), JSON.stringify({domain: $json.domain, raw_response_preview: ($json.raw_ai_response || '').substring(0, 500), parse_success: $json.parse_success, fields_found: $json.fields_found}), $json.run_id, 0] }}"
+          }
+        },
+        "id": "a31ff6df-51f9-47ea-925d-a77e173b8c0b",
+        "name": "Log Error",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          3632,
+          160
+        ],
+        "retryOnFail": false,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "credentials": {
+          "postgres": {
+            "id": "Ra6CDTYkvi3tHtRl",
+            "name": "rafly test"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO processing_status (crm_record_id, last_trigger_timestamp, last_processed_timestamp, processing_count, error_count, last_error_timestamp, last_status, last_run_id, updated_at) VALUES ($1, CASE WHEN $2 IS NOT NULL AND $2 != '' THEN TO_TIMESTAMP(CAST($2 AS BIGINT) / 1000) ELSE NULL END, $3, 1, $4, $5, $6, $7::uuid, NOW()) ON CONFLICT (crm_record_id) DO UPDATE SET last_trigger_timestamp = COALESCE(CASE WHEN $2 IS NOT NULL AND $2 != '' THEN TO_TIMESTAMP(CAST($2 AS BIGINT) / 1000) ELSE NULL END, processing_status.last_trigger_timestamp), last_processed_timestamp = $3, processing_count = processing_status.processing_count + 1, error_count = CASE WHEN $6 = 'error' THEN processing_status.error_count + 1 ELSE processing_status.error_count END, last_error_timestamp = CASE WHEN $6 = 'error' THEN $5 ELSE processing_status.last_error_timestamp END, last_status = $6, last_run_id = $7::uuid, updated_at = NOW() RETURNING *",
+          "options": {
+            "queryReplacement": "={{ [$json.company_id || $('Validate Data').last().json.company_id, $json.enrichment_trigger || $('Validate Data').last().json.enrichment_trigger || null, $json.extraction_timestamp || $('Validate Data').last().json.extraction_timestamp || new Date().toISOString(), ($json.status || $('Validate Data').last().json.status) === 'error' ? 1 : 0, ($json.status || $('Validate Data').last().json.status) === 'error' ? new Date().toISOString() : null, $json.status || $('Validate Data').last().json.status || 'processed', $json.run_id || $('Validate Data').last().json.run_id] }}"
+          }
+        },
+        "id": "75a1887a-28df-41e7-9bf1-1add38471700",
+        "name": "Update Status",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          3856,
+          48
+        ],
+        "retryOnFail": false,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "credentials": {
+          "postgres": {
+            "id": "Ra6CDTYkvi3tHtRl",
+            "name": "rafly test"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "results",
+          "options": {}
+        },
+        "id": "a81d180c-63b0-45c8-9554-259e6cd8bfbc",
+        "name": "Aggregate Results",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          4320,
+          16
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// TRD Section 2.1: All output properties for HubSpot batch update\nconst allItems = $input.all();\nconst results = allItems.length > 0 && allItems[0].json.results ? allItems[0].json.results : allItems.map(i => i.json);\nconst safeResults = [];\nlet successCount = 0;\nlet failCount = 0;\nlet skipCount = 0;\n\n// Read skip stats directly from Apply Dedup Rules (survives regardless of batch loop)\ntry {\n  const dedupStats = $('Apply Dedup Rules').first().json.stats;\n  if (dedupStats && dedupStats.skipped) {\n    skipCount = Object.values(dedupStats.skipped).reduce((a, b) => a + b, 0);\n  }\n} catch(e) { skipCount = 0; }\n\nfor (const result of results) {\n  if (!result.company_id) { failCount++; continue; }\n  const isError = result.status === 'error';\n  if (isError) failCount++; else successCount++;\n  \n  const properties = {\n    extracted_phone: result.extracted_phone || 'none',\n    extracted_email: result.extracted_email || 'none',\n    extracted_address: result.extracted_address || 'none',\n    extraction_model: 'gemini-2.5-pro',\n    extraction_timestamp: new Date().toISOString(),\n    extraction_confidence: result.confidence_score || 0,\n    fields_found_count: result.fields_found || 0,\n    processing_status: result.status || 'complete'\n  };\n  \n  if (isError && result.error_message) {\n    properties.error_message = result.error_message;\n  }\n  \n  safeResults.push({ id: result.company_id, properties });\n}\n\n// Batch into groups of 100 (HubSpot limit)\nconst batches = [];\nfor (let i = 0; i < safeResults.length; i += 100) {\n  batches.push({\n    inputs: safeResults.slice(i, i + 100),\n    batch_number: Math.floor(i / 100) + 1,\n    total_in_batch: Math.min(100, safeResults.length - i)\n  });\n}\n\nif (batches.length === 0) {\n  return [{ json: { inputs: [], batch_number: 0, total_in_batch: 0, success_count: successCount, fail_count: failCount, companies_skipped: skipCount, skip_hubspot: true, run_id: results[0]?.run_id || '' } }];\n}\n\nbatches[0].success_count = successCount;\nbatches[0].fail_count = failCount;\nbatches[0].companies_skipped = skipCount;\nbatches[0].skip_hubspot = false;\nbatches[0].run_id = results[0]?.run_id || '';\nreturn batches.map(batch => ({ json: batch }));\n"
+        },
+        "id": "b72bde3f-161c-4bd5-a51f-6bde10c1a637",
+        "name": "Safety Validation",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4496,
+          16
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/update",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ inputs: $json.inputs }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            },
+            "timeout": 30000
+          }
+        },
+        "id": "7fc430c7-851c-47df-a20e-b827c3258c16",
+        "name": "HubSpot Batch Update",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          4688,
+          16
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 4000,
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "HayQkjpu3XNeTCOR",
+            "name": "HubSpot account"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO workflow_runs (run_id, started_at, completed_at, status, companies_processed, companies_successful, companies_failed, companies_skipped, total_duration_seconds, trigger_type) VALUES ($1::uuid, $2, NOW(), 'completed', $3, $4, $5, $6, EXTRACT(EPOCH FROM (NOW() - $2::timestamp)), $7) ON CONFLICT (run_id) DO UPDATE SET completed_at = NOW(), status = 'completed', companies_processed = $3, companies_successful = $4, companies_failed = $5, companies_skipped = $6, total_duration_seconds = EXTRACT(EPOCH FROM (NOW() - workflow_runs.started_at)), trigger_type = $7",
+          "options": {
+            "queryReplacement": "={{ [$('Safety Validation').first().json.run_id || $('Initialize Run').first().json.run_id, $('Initialize Run').first().json.started_at, ($('Safety Validation').first().json.success_count || 0) + ($('Safety Validation').first().json.fail_count || 0), $('Safety Validation').first().json.success_count || 0, $('Safety Validation').first().json.fail_count || 0, $('Safety Validation').first().json.companies_skipped || 0, $('Initialize Run').first().json.trigger_type || 'schedule'] }}"
+          }
+        },
+        "id": "ef1b153c-9451-4e49-8e50-f4b203ffc98d",
+        "name": "Log Run Complete",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          4880,
+          16
+        ],
+        "retryOnFail": false,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "credentials": {
+          "postgres": {
+            "id": "Ra6CDTYkvi3tHtRl",
+            "name": "rafly test"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "projectId": {
+            "__rl": true,
+            "value": "chrystalesia",
+            "mode": "list",
+            "cachedResultName": "chrystalesia"
+          },
+          "modelName": "gemini-2.5-pro",
+          "options": {
+            "temperature": 0.5
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleVertex",
+        "typeVersion": 1,
+        "position": [
+          2480,
+          272
+        ],
+        "id": "d7b656d5-7a87-41c0-b656-3f62faab7fbd",
+        "name": "Google Vertex Chat Model",
+        "credentials": {
+          "googleApi": {
+            "id": "9iY5nunUaOYRzEe5",
+            "name": "rafly vertex"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Re-assemble extracted data from Validate Data node for the batch loop\n// Use .last() to get the current iteration's data in a batch loop\nconst validated = $('Validate Data').last().json;\n\nreturn {\n  json: {\n    company_id: validated.company_id,\n    company_name: validated.company_name,\n    domain: validated.domain,\n    extracted_phone: validated.extracted_phone || 'none',\n    extracted_email: validated.extracted_email || 'none',\n    extracted_address: validated.extracted_address || 'none',\n    confidence_score: validated.confidence_score || 0,\n    fields_found: validated.fields_found || 0,\n    status: validated.status || 'partial',\n    extraction_timestamp: validated.extraction_timestamp || new Date().toISOString(),\n    extraction_time_seconds: validated.extraction_time_seconds || 0,\n    enrichment_trigger: validated.enrichment_trigger || '',\n    model_version: 'gemini-2.5-pro',\n    sources: validated.sources || '',\n    run_id: validated.run_id || '',\n    error_message: validated.error_message || ''\n  }\n};\n"
+        },
+        "id": "ececde5e-5fff-4845-bf92-0c2047746dbd",
+        "name": "Carry Forward Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4032,
+          256
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## Deduplication Check\n\nValidates ALL 8 trigger conditions before processing:\n1. enrichment_trigger exists and within 6 months\n2. clearbit_enriched = false, clearbit_confidence is null\n3. extracted_phone, extracted_email, extracted_address all empty\n4. manual_override != true\n5. Has enrichment data (at least one scraped field)\n6. Not processed within last 30 days (dedup window)\n7. No errors within last 24 hours (error cooldown)\n8. Less than 5 total error attempts\n\nConditions 1-5 checked from HubSpot data.\nConditions 6-8 checked against PostgreSQL processing_status table.",
+          "height": 512,
+          "width": 544,
+          "color": 7
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1392,
+          -304
+        ],
+        "typeVersion": 1,
+        "id": "7fc2d66c-0fd9-460b-8332-85e386d3ef17",
+        "name": "Sticky Note1"
+      },
+      {
+        "parameters": {
+          "content": "## AI Extraction\n\n**Required Architecture (Section 1.2):**\nAI Provider: Google Vertex AI (Gemini 2.5 Pro)\n\n**Vertex AI Configuration (Section 7.2):**\n- Model: gemini-2.5-pro\n- Temperature: 0.5\n\n**Required Output Format (Section 3.1):**\nPhone: <phone_with_country_code_no_formatting>\nAddress: <full_street_address_google_format>\nEmail: <generic_company_email>\nReturns \"none\" (lowercase) if field cannot be found.\n\n**Strategy:**\n1. Extract from pre-scraped content (primary)\n2. HTTP Request to fetch /contact or /about (fallback)\n3. Deep Research Tool for email patterns (last resort)\n\n**Retry Logic:** 3 attempts, exponential backoff, 30s timeout",
+          "height": 944,
+          "width": 2048,
+          "color": 7
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2160,
+          -464
+        ],
+        "typeVersion": 1,
+        "id": "2eb429d8-6027-453a-b42e-456024cfd1ce",
+        "name": "Sticky Note2"
+      },
+      {
+        "parameters": {
+          "content": "## Data Validation, Storage & CRM Update\n\n**Validation Rules (Section 4):**\n- Phone: 10-20 digits, starts with + or digit, valid country code (+1, +44, +61, etc.), reject all zeros/ones/sequential/repeated\n- Email: Valid format, 5-254 chars, reject test@, example@, noreply@, @localhost\n- Address: 10-500 chars, reject PO Box/P.O. Box/GPO Box, must contain street number + type\n\n**PostgreSQL Storage:**\n- contact_extraction_results: Main audit trail\n- processing_status: Dedup tracking\n- processing_errors: Error logging\n\n**HubSpot Batch Update:**\n- Max 100 companies per batch request\n- Safety Validation before writing to CRM\n- Updates: extracted_phone, extracted_email, extracted_address, processing_status, extraction_confidence, fields_found_count, extraction_timestamp, extraction_model\n\n**Audit Logging:** workflow_runs table records run metrics",
+          "height": 688,
+          "width": 768,
+          "color": 7
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          4272,
+          -464
+        ],
+        "typeVersion": 1,
+        "id": "f080ae5f-8eb8-410a-96da-faa5d0f2bf38",
+        "name": "Sticky Note3"
+      },
+      {
+        "parameters": {
+          "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', '', 'string') }}",
+          "options": {}
+        },
+        "id": "4d930e90-24dd-4cab-ab8c-327705ba8c84",
+        "name": "HTTP Request Tool",
+        "type": "n8n-nodes-base.httpRequestTool",
+        "typeVersion": 4.3,
+        "position": [
+          2640,
+          272
+        ]
+      },
+      {
+        "parameters": {
+          "description": "Generate common business email patterns for a company domain. Input should be the company domain (e.g. 'patagonia.com'). Returns a list of likely email addresses to try based on common business patterns.",
+          "jsCode": "const domain = query.trim().replace(/^https?:\\/\\//, '').replace(/^www\\./, '').split('/')[0];\n\nconst prefixes = [\n  'info', 'contact', 'hello', 'support', 'sales',\n  'admin', 'office', 'enquiries', 'inquiries',\n  'press', 'media', 'marketing', 'partnerships',\n  'hr', 'careers', 'jobs', 'billing',\n  'legal', 'compliance', 'privacy',\n  'help', 'feedback', 'general'\n];\n\nconst emails = prefixes.map(p => `${p}@${domain}`);\n\nreturn `Common business email patterns for ${domain}:\\n${emails.join('\\n')}\\n\\nMost likely general contact emails:\\n- info@${domain}\\n- contact@${domain}\\n- hello@${domain}\\n- support@${domain}\\n\\nNote: These are PATTERN suggestions. Verify actual existence via search results or website content before using.`;"
+        },
+        "id": "631a3627-bc4a-4e9c-86dc-669e6263dfa7",
+        "name": "Deep Research Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1.3,
+        "position": [
+          2784,
+          272
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst resultData = staticData.resultData || {};\n\n// Clear for next workflow execution\nstaticData.allCompanies = [];\nstaticData.resultData = null;\n\n// Return as SINGLE item with the structure second code expects\nreturn {\n  json: resultData\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          48
+        ],
+        "id": "f818d1b3-16a7-4f25-8693-657571b6dcd4",
+        "name": "fetch companies",
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "jsCode": "return {\n  page_index: $input.first().json.paging_cursor\n}"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          784,
+          16
+        ],
+        "id": "1e3d41d4-5272-4b8f-bfc0-b0dfa60ff5eb",
+        "name": "handle pagination"
+      },
+      {
+        "id": "166485ae-6370-4c3e-a539-d38105a49d58",
+        "name": "Update CRM Timestamp",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          4784,
+          16
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE contact_extraction_results SET crm_updated_at = NOW() WHERE processing_run_id = $1::uuid AND crm_updated_at IS NULL",
+          "options": {
+            "queryReplacement": "={{ [$json.run_id || $('Initialize Run').first().json.run_id] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "Ra6CDTYkvi3tHtRl",
+            "name": "rafly test"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "36d56521-8efd-4203-a7db-0bea9155a147",
+        "name": "Log Empty Run",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          2260,
+          280
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO workflow_runs (run_id, started_at, completed_at, status, companies_processed, companies_successful, companies_failed, companies_skipped, total_duration_seconds, trigger_type) VALUES ($1::uuid, $2, NOW(), 'completed', 0, 0, 0, $3, EXTRACT(EPOCH FROM (NOW() - $2::timestamp)), $4) ON CONFLICT (run_id) DO UPDATE SET completed_at = NOW(), status = 'completed', companies_processed = 0, companies_successful = 0, companies_failed = 0, companies_skipped = $3, total_duration_seconds = EXTRACT(EPOCH FROM (NOW() - workflow_runs.started_at)), trigger_type = $4",
+          "options": {
+            "queryReplacement": "={{ [$('Initialize Run').first().json.run_id, $('Initialize Run').first().json.started_at, (() => { try { const s = $('Apply Dedup Rules').first().json.stats; return s && s.skipped ? Object.values(s.skipped).reduce((a,b) => a+b, 0) : 0; } catch(e) { return 0; } })(), $('Initialize Run').first().json.trigger_type || 'schedule'] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "Ra6CDTYkvi3tHtRl",
+            "name": "rafly test"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "id": "skip-empty-batch-check",
+        "name": "Has Results?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          4592,
+          16
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 3,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "check-skip",
+                "leftValue": "={{ $json.skip_hubspot }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "notTrue"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Schedule Trigger": {
+        "main": [
+          [
+            {
+              "node": "Crypto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Clear PostgreSQL Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Test Data": {
+        "main": [
+          [
+            {
+              "node": "Seed to HubSpot",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Search All Test Companies": {
+        "main": [
+          [
+            {
+              "node": "Prepare Delete Batch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Delete Batch": {
+        "main": [
+          [
+            {
+              "node": "Delete HubSpot Companies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete HubSpot Companies": {
+        "main": [
+          [
+            {
+              "node": "Test Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Clear PostgreSQL Data": {
+        "main": [
+          [
+            {
+              "node": "Search All Test Companies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Crypto": {
+        "main": [
+          [
+            {
+              "node": "Initialize Run",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Initialize Run": {
+        "main": [
+          [
+            {
+              "node": "HubSpot Search API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HubSpot Search API": {
+        "main": [
+          [
+            {
+              "node": "Accumulate Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Accumulate Results": {
+        "main": [
+          [
+            {
+              "node": "More Pages?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "More Pages?": {
+        "main": [
+          [
+            {
+              "node": "handle pagination",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "fetch companies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse All Companies": {
+        "main": [
+          [
+            {
+              "node": "Check Dedup Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Dedup Status": {
+        "main": [
+          [
+            {
+              "node": "Apply Dedup Rules",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Apply Dedup Rules": {
+        "main": [
+          [
+            {
+              "node": "Has Companies?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Companies?": {
+        "main": [
+          [
+            {
+              "node": "Split In Batches",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Log Empty Run",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split In Batches": {
+        "main": [
+          [
+            {
+              "node": "Aggregate Results",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Prepare AI Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare AI Input": {
+        "main": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent": {
+        "main": [
+          [
+            {
+              "node": "Process Agent Output",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Structured Output Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Agent Output": {
+        "main": [
+          [
+            {
+              "node": "Validate Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Data": {
+        "main": [
+          [
+            {
+              "node": "Check Valid",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Valid": {
+        "main": [
+          [
+            {
+              "node": "Store Result",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Log Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store Result": {
+        "main": [
+          [
+            {
+              "node": "Update Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Log Error": {
+        "main": [
+          [
+            {
+              "node": "Update Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Status": {
+        "main": [
+          [
+            {
+              "node": "Carry Forward Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate Results": {
+        "main": [
+          [
+            {
+              "node": "Safety Validation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Vertex Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Carry Forward Data": {
+        "main": [
+          [
+            {
+              "node": "Split In Batches",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Deep Research Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "fetch companies": {
+        "main": [
+          [
+            {
+              "node": "Parse All Companies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "handle pagination": {
+        "main": [
+          [
+            {
+              "node": "HubSpot Search API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HubSpot Batch Update": {
+        "main": [
+          [
+            {
+              "node": "Update CRM Timestamp",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update CRM Timestamp": {
+        "main": [
+          [
+            {
+              "node": "Log Run Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Safety Validation": {
+        "main": [
+          [
+            {
+              "node": "Has Results?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Results?": {
+        "main": [
+          [
+            {
+              "node": "HubSpot Batch Update",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Log Run Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Chrysler Chandra",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-02-03T10:34:42.442Z",
+        "id": 354,
+        "workflowId": "3oc9SlzVUfZMrW0a",
+        "versionId": "e892d15e-69be-41f5-8820-6b8c7ef76803",
+        "event": "activated",
+        "userId": "8174ea72-6ca0-4b2b-ae42-ae95e0dcd9ca"
+      }
+    ]
+  }
+}
