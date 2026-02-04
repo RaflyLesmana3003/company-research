@@ -543,25 +543,40 @@ External HTTP requests to company domains may time out or return unexpected resu
 
 ## Metrics Dashboard
 
-See the `/dashboard` directory for the Vercel-deployed metrics dashboard.
+A Next.js dashboard for monitoring the extraction pipeline in real time. See [`dashboard/README.md`](dashboard/README.md) for setup and details.
 
-### Available Metrics
-
-- **Volume**: Total processed, success rate, throughput
-- **Quality**: Field extraction rates, confidence scores, fields_found distribution
-- **Errors**: Count by type, retry rates, recent errors
+**Key features:**
+- KPI cards (total processed, success rate, throughput)
+- Field extraction rate and confidence histograms
+- CRM writeback status tracking
+- Error breakdown and trend charts
+- Extracted data detail table
+- Dark mode support
 
 ---
+
+## Project Structure
+
+```
+.
+├── dashboard/          # Next.js metrics dashboard
+├── database/           # PostgreSQL schema (schema.sql)
+├── docs/               # Requirements, design docs, TRD
+├── tests/              # Test cases and validation results
+└── workflow/           # n8n workflow JSON files
+```
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `workflows/contact-extraction-workflow.json` | Main n8n workflow |
-| `schema.sql` | PostgreSQL schema |
-| `README.md` | This documentation |
+| `workflow/contact-extraction-workflow.json` | Main n8n workflow |
+| `database/schema.sql` | PostgreSQL schema |
+| `dashboard/` | Next.js monitoring dashboard |
 | `docs/requirements-contact-extraction.md` | Requirements doc |
 | `docs/design-contact-extraction.md` | Design doc |
+| `docs/dashboard_trd.md` | Dashboard technical requirements |
+| `tests/test-cases-contact-extraction.md` | Test cases |
 
 ---
 
