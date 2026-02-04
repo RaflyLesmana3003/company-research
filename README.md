@@ -3,6 +3,8 @@
 **Dashboard:** [sme-venture.vercel.app](https://sme-venture.vercel.app)
 
 An automated n8n workflow that extracts and validates business contact information (phone, email, address) from enriched company data using AI, then safely updates HubSpot CRM records.
+<img width="1230" height="473" alt="n8n" src="https://github.com/user-attachments/assets/268ca9dc-366c-4819-9209-ddcfc090e003" />
+<img width="1420" height="718" alt="dsahboard" src="https://github.com/user-attachments/assets/0a3c8a7f-db28-40e1-90aa-ed91b93a02a7" />
 
 ## Table of Contents
 
